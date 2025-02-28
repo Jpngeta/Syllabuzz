@@ -1,0 +1,32 @@
+/* Custom gradient background */
+body {
+	background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  }
+  
+  /* Glassmorphism effect */
+  .glass {
+	background: rgba(255, 255, 255, 0.9);
+	backdrop-filter: blur(10px);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+	width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+	background: #f1f1f1;
+  }
+  ::-webkit-scrollbar-thumb {
+	background: #888;
+	border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+	background: #555;
+  }
+  
+  /* Smooth transitions */
+  .transition-all {
+	transition: all 0.3s ease;
+  }

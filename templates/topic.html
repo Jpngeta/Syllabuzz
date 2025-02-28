@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex items-center mb-6">
+        <h1 class="text-2xl font-bold">{{ topic }}</h1>
+        <span class="ml-2 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm">
+            {{ articles|length }} articles
+        </span>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for article in articles %}
+        <div class="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition duration-200">
+            {% if article.image_url %}
+            <img src="{{ article.image_url }}" alt="{{ article.title }}" class="w-full h-48 object-cover">
+            {% else %}
+            <div class="w-full h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                <i class="fas fa-newspaper text-4xl text-gray-400 dark:text-gray-500"></i>
+            </div>
+            {% endif %}
+            
+            <div class="p-4">
+                <h2 class="text-xl font-semibold mb-2 text-blue-600 dark:text-blue-400">
+                    <a href="{{ url_for('article', article_id=article._id) }}">{{ article.title }}</a>
+                </h2>
+                
+                <p class="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
+                    {{ article.description or article.content[:150] + "..." }}
+                </p>
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-500">
+                        {{ article.published_at.strftime('%b %d, %Y') }}
+                    </span>
+                    
+                    <button class="text-yellow-500 hover:text-yellow-600" data-id="{{ article._id }}">
+                        {% if article._id|string in bookmarked_articles|map(attribute='_id')|map('string')|list %}
+                            <i class="fas fa-bookmark"></i>
+                        {% else %}
+                            <i class="far fa-bookmark"></i>
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-span-3 bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
+            <i class="fas fa-search text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
+            <h2 class="text-xl font-semibold mb-2">No articles found</h2>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">We couldn't find any articles in this topic</p>
+            <a href="{{ url_for('articles') }}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                Browse All Articles
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

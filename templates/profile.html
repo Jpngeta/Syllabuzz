@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile | Syllabuzz{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+    <h1 class="text-3xl font-bold mb-8">My Profile</h1>
+
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-2xl font-semibold mb-6">Account Information</h2>
+
+        <!-- Display flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-4 rounded-md {{ 'bg-green-100 text-green-800' if category == 'success' else 'bg-red-100 text-red-800' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- In your profile form, ensure the action points to the update_account route -->
+        <form method="POST" action="{{ url_for('update_account') }}" class="space-y-6">
+            <!-- CSRF Token (Required) -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
+                <input type="text" id="name" name="name" value="{{ user.name }}" required 
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm dark:bg-gray-700 dark:text-white">
+            </div>
+            
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+                <input type="email" id="email" name="email" value="{{ user.email }}" required 
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm dark:bg-gray-700 dark:text-white" readonly>
+                <p class="text-xs text-gray-500 mt-1">Email address cannot be changed</p>
+            </div>
+            
+            <div>
+                <label for="bio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bio</label>
+                <textarea id="bio" name="bio" rows="4" 
+                          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm dark:bg-gray-700 dark:text-white">{{ user.bio or '' }}</textarea>
+            </div>
+            
+            <div>
+                <label for="preferences" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content Preferences</label>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="preferences" value="business" 
+                               {{ 'checked' if 'business' in user.preferences }} class="form-checkbox">
+                        <span class="ml-2">Business</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="preferences" value="technology" 
+                               {{ 'checked' if 'technology' in user.preferences }} class="form-checkbox">
+                        <span class="ml-2">Technology</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="preferences" value="science" 
+                               {{ 'checked' if 'science' in user.preferences }} class="form-checkbox">
+                        <span class="ml-2">Science</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="preferences" value="health" 
+                               {{ 'checked' if 'health' in user.preferences }} class="form-checkbox">
+                        <span class="ml-2">Health</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="preferences" value="entertainment" 
+                               {{ 'checked' if 'entertainment' in user.preferences }} class="form-checkbox">
+                        <span class="ml-2">Entertainment</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="preferences" value="sports" 
+                               {{ 'checked' if 'sports' in user.preferences }} class="form-checkbox">
+                        <span class="ml-2">Sports</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="flex justify-end">
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    Update Profile
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <h2 class="text-2xl font-semibold mb-6">Change Password</h2>
+        
+        <!-- In your change password form, ensure the action points to the change_password route -->
+        <form method="POST" action="{{ url_for('change_password') }}" class="space-y-6">
+            <!-- CSRF Token (Required) -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div>
+                <label for="current_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Password</label>
+                <input type="password" id="current_password" name="current_password" required 
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm dark:bg-gray-700 dark:text-white">
+            </div>
+            
+            <div>
+                <label for="new_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
+                <input type="password" id="new_password" name="new_password" required 
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm dark:bg-gray-700 dark:text-white">
+                <p class="text-xs text-gray-500 mt-1">Password must be at least 8 characters</p>
+            </div>
+            
+            <div>
+                <label for="confirm_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm New Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" required 
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm dark:bg-gray-700 dark:text-white">
+            </div>
+            
+            <div class="flex justify-end">
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    Change Password
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabNavs = document.querySelectorAll('.tab-nav');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // Tab navigation
+        tabNavs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs
+                tabNavs.forEach(t => {
+                    t.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                    t.classList.remove('dark:text-blue-400', 'dark:border-blue-400');
+                    t.classList.add('text-gray-500', 'dark:text-gray-400');
+                });
+                
+                // Add active class to clicked tab
+                this.classList.remove('text-gray-500', 'dark:text-gray-400');
+                this.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+                this.classList.add('dark:text-blue-400', 'dark:border-blue-400');
+                
+                // Hide all tab contents
+                tabContents.forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Show the selected tab content
+                const tabId = this.id.replace('nav-', 'content-');
+                document.getElementById(tabId).classList.remove('hidden');
+            });
+        });
+        
+        // Show previously active tab on page load (if in URL hash)
+        const hash = window.location.hash.replace('#', '');
+        if (hash && ['info', 'account', 'preferences'].includes(hash)) {
+            document.getElementById(`nav-${hash}`).click();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,9 @@
+{# 404.html #}
+{% extends "base.html" %}
+{% block title %}Server Not Found{% endblock %}
+{% block content %}
+    <h2 class="text-3xl font-bold mb-6 text-center">500 - Server Not Found</h2>
+    <p class="text-center">
+        <a href="{{ url_for('login') }}" class="text-yellow-600 hover:underline">Return to Login</a>
+    </p>
+{% endblock %}

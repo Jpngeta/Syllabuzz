@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | Syllabuzz{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">Your Dashboard</h1>
+    
+    <!-- Primary categories (loaded immediately) -->
+    {% for category, articles in primary_articles.items() %}
+    <section class="mb-12">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-semibold">{{ category|capitalize }}</h2>
+            <a href="{{ url_for('articles', category=category) }}" class="text-blue-500 hover:text-blue-700">View all</a>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for article in articles %}
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden h-full flex flex-col">
+                {% if article.image_url %}
+                <div class="h-40 bg-cover bg-center" style="background-image: url('{{ article.image_url }}')"></div>
+                {% else %}
+                <div class="h-40 bg-cover bg-center bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                    <i class="fas fa-newspaper text-4xl text-gray-400"></i>
+                </div>
+                {% endif %}
+                
+                <div class="p-4 flex-grow flex flex-col">
+                    <h3 class="font-semibold mb-2 line-clamp-2">
+                        <a href="{{ url_for('article', article_id=article._id|string) }}" class="hover:text-blue-500" onclick="trackArticleClick('{{ article._id|string }}'); return true;">
+                            {{ article.title }}
+                        </a>
+                    </h3>
+                    
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2 flex-grow">
+                        {{ article.description or 'No description available' }}
+                    </p>
+                    
+                    <div class="flex items-center justify-between mt-auto pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <span class="text-xs text-gray-500">{{ article.source_name }}</span>
+                        
+                        <button 
+                            class="bookmark-btn p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 {{ 'bookmarked' if article._id|string in bookmarked_articles }}"
+                            data-id="{{ article._id }}">
+                            {% if article._id|string in bookmarked_articles %}
+                                <i class="fas fa-bookmark text-blue-500"></i>
+                            {% else %}
+                                <i class="far fa-bookmark"></i>
+                            {% endif %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endfor %}
+    
+    <!-- Secondary categories (loaded via AJAX) -->
+    {% for category in secondary_categories %}
+    <section id="category-{{ category }}" class="mb-12">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-semibold">{{ category|capitalize }}</h2>
+            <a href="{{ url_for('articles', category=category) }}" class="text-blue-500 hover:text-blue-700">View all</a>
+        </div>
+        
+        <div class="category-loading text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            <p class="mt-2 text-gray-600 dark:text-gray-400">Loading {{ category }} articles...</p>
+        </div>
+        
+        <div class="category-articles grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" style="display: none;"></div>
+    </section>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle bookmark toggling
+        setupBookmarkButtons();
+        
+        // Load secondary categories
+        const secondaryCategories = {{ secondary_categories|tojson }};
+        loadSecondaryCategories(secondaryCategories);
+        
+        function setupBookmarkButtons() {
+            document.querySelectorAll('.bookmark-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const articleId = this.getAttribute('data-id');
+                    toggleBookmark(articleId, this);
+                });
+            });
+        }
+        
+        function toggleBookmark(articleId, button) {
+            // Get the CSRF token from the meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            fetch('/api/bookmark/toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ article_id: articleId })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+                        throw new Error('Please log in to bookmark articles');
+                    }
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Update bookmark icon
+                if (data.is_bookmarked) {
+                    button.innerHTML = '<i class="fas fa-bookmark text-blue-500"></i>';
+                    button.classList.add('bookmarked');
+                } else {
+                    button.innerHTML = '<i class="far fa-bookmark"></i>';
+                    button.classList.remove('bookmarked');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+        
+        function loadSecondaryCategories(categories) {
+            categories.forEach((category, index) => {
+                // Add a delay between requests to avoid rate limiting
+                setTimeout(() => {
+                    loadCategoryArticles(category);
+                }, index * 2000); // 2 seconds between each category load
+            });
+        }
+        
+        function loadCategoryArticles(category) {
+            const container = document.querySelector(`#category-${category} .category-articles`);
+            const loadingEl = document.querySelector(`#category-${category} .category-loading`);
+            
+            // Show loading indicator
+            if (loadingEl) {
+                loadingEl.style.display = 'block';
+            }
+            
+            fetch(`/api/articles/category/${category}?size=4`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.articles && Array.isArray(data.articles) && data.articles.length > 0) {
+                    // Render articles
+                    if (container) {
+                        container.innerHTML = '';
+                        data.articles.forEach(article => {
+                            if (article && article.title) {  // Only render valid articles
+                                container.appendChild(createArticleCard(article));
+                            }
+                        });
+                        
+                        // Show content and hide loading
+                        container.style.display = 'grid';
+                        if (loadingEl) {
+                            loadingEl.style.display = 'none';
+                        }
+                        
+                        // Setup bookmark buttons on new content
+                        setupBookmarkButtons();
+                    }
+                } else {
+                    // Show empty state
+                    if (loadingEl) {
+                        loadingEl.innerHTML = `<p class="text-gray-600 dark:text-gray-400">No ${category} articles available</p>`;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error(`Error loading ${category} articles:`, error);
+                if (loadingEl) {
+                    loadingEl.innerHTML = `
+                        <p class="text-gray-600 dark:text-gray-400 mb-2">Failed to load ${category} articles</p>
+                        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm" 
+                                onclick="loadCategoryArticles('${category}')">
+                            Try Again
+                        </button>
+                    `;
+                }
+            });
+        }
+        
+        function createArticleCard(article) {
+            const card = document.createElement('div');
+            card.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden h-full flex flex-col';
+            
+            // Check if user has bookmarked this article
+            const bookmarkedArticles = {{ bookmarked_articles|tojson }};
+            
+            // Make sure article._id is a string for comparison
+            const articleId = typeof article._id === 'object' ? article._id.toString() : article._id;
+            const isBookmarked = bookmarkedArticles.includes(articleId);
+            
+            // Safely get image URL
+            const imageUrl = article.image_url || '';
+            
+            const imageHtml = imageUrl 
+                ? `<div class="h-40 bg-cover bg-center" style="background-image: url('${imageUrl}')"></div>`
+                : `<div class="h-40 bg-cover bg-center bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                       <i class="fas fa-newspaper text-4xl text-gray-400"></i>
+                   </div>`;
+            
+            // Safely get description
+            const description = article.description || 'No description available';
+            
+            // Safely get source name
+            const sourceName = article.source_name || 'Unknown';
+            
+            card.innerHTML = `
+                ${imageHtml}
+                <div class="p-4 flex-grow flex flex-col">
+                    <h3 class="font-semibold mb-2 line-clamp-2">
+                        <a href="/article/${articleId}" class="hover:text-blue-500" onclick="trackArticleClick('${articleId}'); return true;">
+                            ${article.title || 'Untitled Article'}
+                        </a>
+                    </h3>
+                    
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2 flex-grow">
+                        ${description}
+                    </p>
+                    
+                    <div class="flex items-center justify-between mt-auto pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <span class="text-xs text-gray-500">${sourceName}</span>
+                        
+                        <button 
+                            class="bookmark-btn p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 ${isBookmarked ? 'bookmarked' : ''}"
+                            data-id="${articleId}">
+                            ${isBookmarked 
+                                ? '<i class="fas fa-bookmark text-blue-500"></i>'
+                                : '<i class="far fa-bookmark"></i>'
+                            }
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+    });
+
+    // Add this to your existing script
+    function trackArticleClick(articleId) {
+        // Track that the user clicked on this article
+        fetch('/api/article/view', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+            },
+            body: JSON.stringify({ article_id: articleId })
+        }).catch(err => console.log('Error recording article view:', err));
+    }
+</script>
+{% endblock %}
