@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Bookmarks | Syllabuzz{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<header class="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
+    <h1 class="text-3xl font-bold">Your Bookmarks</h1>
+    
+    <!-- Remove the individual theme toggle button -->
+</header>
+
+<!-- Bookmark Filters -->
+<div class="flex flex-wrap gap-2 mb-6">
+    <button class="filter-btn px-4 py-2 bg-blue-500 text-white rounded-lg" data-filter="all">All</button>
+    <button class="filter-btn px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg" data-filter="technology">Technology</button>
+    <button class="filter-btn px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg" data-filter="science">Science</button>
+    <button class="filter-btn px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg" data-filter="business">Business</button>
+    <button class="filter-btn px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg" data-filter="health">Health</button>
+</div>
+
+<!-- Bookmarks Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="bookmarks-container">
+    {% if bookmarked_articles %}
+        {% for article in bookmarked_articles %}
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden bookmark-card" 
+             data-categories="{{ article.categories|join(',') if article.categories else '' }}">
+            {% if article.image_url %}
+            <div class="h-48 bg-cover bg-center" style="background-image: url('{{ article.image_url }}');"></div>
+            {% else %}
+            <div class="h-48 bg-cover bg-center bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                <i class="fas fa-newspaper text-4xl text-gray-400 dark:text-gray-500"></i>
+            </div>
+            {% endif %}
+            
+            <div class="p-6">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
+                        {{ article.category or 'General' }}
+                    </span>
+                    <button class="remove-bookmark text-red-500 hover:text-red-600" data-id="{{ article._id }}">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+                
+                <h3 class="text-xl font-semibold mt-2 mb-1 line-clamp-2">
+                    <a href="{{ url_for('article', article_id=article._id) }}" class="hover:text-blue-500">
+                        {{ article.title }}
+                    </a>
+                </h3>
+                
+                <p class="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2">
+                    {{ article.description or 'No description available' }}
+                </p>
+                
+                <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">
+                            {% if article.bookmarked_at %}
+                                {{ article.bookmarked_at.strftime('%B %d, %Y') }}
+                            {% else %}
+                                Recently bookmarked
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        {% if article.notes %}
+                        <button class="view-notes p-2 bg-yellow-100 dark:bg-yellow-900 rounded-full text-yellow-600 dark:text-yellow-300" data-id="{{ article._id }}">
+                            <i class="fas fa-sticky-note"></i>
+                        </button>
+                        {% endif %}
+                        
+                        <button class="add-note p-2 bg-green-100 dark:bg-green-900 rounded-full text-green-600 dark:text-green-300" data-id="{{ article._id }}">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-span-full flex flex-col items-center justify-center py-16">
+            <i class="fas fa-bookmark text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
+            <p class="text-center text-gray-500 dark:text-gray-400 mb-4">You haven't bookmarked any articles yet.</p>
+            <a href="{{ url_for('articles') }}" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition duration-200">
+                Browse Articles
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Add Note Modal -->
+<div id="note-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+        <h2 class="text-xl font-semibold mb-4">Add Note</h2>
+        <textarea id="note-content" class="w-full h-32 p-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-white mb-4" placeholder="Write your note here..."></textarea>
+        
+        <div class="flex justify-end space-x-2">
+            <button id="close-modal" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
+                Cancel
+            </button>
+            <button id="save-note" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                Save Note
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/bookmarks.js') }}"></script>
+{% endblock %}

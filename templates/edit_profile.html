@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syllabuzz - Edit Profile</title>
+    <!-- Tailwind CSS -->
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+    <div class="flex min-h-screen">
+        <!-- Sidebar (reuse from other templates) -->
+        <nav class="hidden md:flex flex-col w-72 bg-gradient-to-b from-blue-700 to-blue-900 text-white p-6">
+            <div class="flex items-center space-x-3 mb-8">
+                <i class="fas fa-book-open text-3xl text-yellow-300"></i>
+                <h2 class="text-2xl font-bold">Syllabuzz</h2>
+            </div>
+            
+            <div class="mb-8">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-blue-400 flex items-center justify-center text-xl font-bold">
+                        {{ user.username[0] | upper }}
+                    </div>
+                    <div>
+                        <h3 class="font-medium">{{ user.username }}</h3>
+                        <p class="text-sm text-blue-200">{{ user.subscription_tier | default('Free', true) | capitalize }} Plan</p>
+                    </div>
+                </div>
+            </div>
+            
+            <ul class="flex-1 space-y-1">
+                <li><a href="{{ url_for('dashboard') }}" class="flex items-center p-3 hover:bg-white hover:bg-opacity-10 rounded-lg transition duration-200"><i class="fas fa-columns w-8"></i> Dashboard</a></li>
+                <li><a href="#" class="flex items-center p-3 hover:bg-white hover:bg-opacity-10 rounded-lg transition duration-200"><i class="fas fa-newspaper w-8"></i> Latest News</a></li>
+                <li><a href="{{ url_for('bookmarks') }}" class="flex items-center p-3 hover:bg-white hover:bg-opacity-10 rounded-lg transition duration-200"><i class="fas fa-bookmark w-8"></i> Bookmarks</a></li>
+                <li><a href="{{ url_for('profile') }}" class="flex items-center p-3 bg-white bg-opacity-20 rounded-lg font-medium"><i class="fas fa-user w-8"></i> Profile</a></li>
+                <li><a href="#" class="flex items-center p-3 hover:bg-white hover:bg-opacity-10 rounded-lg transition duration-200"><i class="fas fa-cog w-8"></i> Settings</a></li>
+            </ul>
+            
+            <a href="{{ url_for('logout') }}" class="flex items-center p-3 hover:bg-white hover:bg-opacity-10 rounded-lg transition duration-200">
+                <i class="fas fa-sign-out-alt w-8"></i> Logout
+            </a>
+        </nav>
+        
+        <!-- Mobile Nav Toggle -->
+        <div class="md:hidden fixed bottom-4 right-4 z-50">
+            <button id="mobile-nav-toggle" class="bg-blue-600 text-white p-3 rounded-full shadow-lg">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        
+        <!-- Main Content -->
+        <main class="flex-1 p-4 md:p-8">
+            <div class="max-w-3xl mx-auto">
+                <!-- Form Header -->
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-2xl font-bold">Edit Profile</h1>
+                    <a href="{{ url_for('profile') }}" class="text-blue-500 hover:underline">
+                        <i class="fas fa-arrow-left mr-1"></i> Back to Profile
+                    </a>
+                </div>
+                
+                <!-- Edit Form -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+                    <form method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="mb-6">
+                            <label class="block text-gray-700 dark:text-gray-300 mb-2" for="profile_pic">
+                                Profile Picture
+                            </label>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-20 h-20 rounded-full overflow-hidden">
+                                    {% if user.profile_pic %}
+                                    <img src="{{ user.profile_pic }}" alt="{{ user.username }}" class="w-full h-full object-cover">
+                                    {% else %}
+                                    <div class="w-full h-full bg-blue-400 flex items-center justify-center text-2xl font-bold">
+                                        {{ user.username[0] | upper }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <input type="file" 
+                                           name="profile_pic" 
+                                           id="profile_pic"
+                                           class="block w-full text-sm text-gray-500
+                                                  file:mr-4 file:py-2 file:px-4
+                                                  file:rounded-lg file:border-0
+                                                  file:text-sm file:font-semibold
+                                                  file:bg-blue-50 file:text-blue-700
+                                                  hover:file:bg-blue-100
+                                                  dark:file:bg-gray-700 dark:file:text-gray-200">
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                        PNG, JPG, GIF up to 5MB
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="block text-gray-700 dark:text-gray-300 mb-2" for="name">
+                                Display Name
+                            </label>
+                            <input type="text" 
+                                   name="name" 
+                                   id="name" 
+                                   value="{{ user.name | default('', true) }}"
+                                   class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                                   placeholder="Your display name">
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="block text-gray-700 dark:text-gray-300 mb-2" for="username">
+                                Username
+                            </label>
+                            <input type="text" 
+                                   name="username" 
+                                   id="username" 
+                                   value="{{ user.username }}"
+                                   class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 bg-gray-100 dark:bg-gray-800"
+                                   disabled>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="block text-gray-700 dark:text-gray-300 mb-2" for="bio">
+                                Bio
+                            </label>
+                            <textarea name="bio" 
+                                      id="bio" 
+                                      rows="3"
+                                      class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                                      placeholder="Tell others about yourself">{{ user.bio | default('', true) }}</textarea>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-4">
+                            <a href="{{ url_for('profile') }}" class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                Cancel
+                            </a>
+                            <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Mobile navigation toggle
+        document.getElementById('mobile-nav-toggle')?.addEventListener('click', function() {
+            const sidebar = document.querySelector('nav');
+            sidebar.classList.toggle('hidden');
+            sidebar.classList.toggle('fixed');
+            sidebar.classList.toggle('inset-0');
+            sidebar.classList.toggle('z-40');
+        });
+    </script>
+</body>
+</html>
