@@ -1,2 +1,2 @@
-# Team-Project-3.2
+# Syllabuzz
 CS Team Project
