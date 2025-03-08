@@ -1,2 +1,2 @@
 # Syllabuzz
-CS Team Project
+A news, article and recommender app for tech students
