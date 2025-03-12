@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+
+{% block title %}CS Module Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Module Details -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0" id="moduleTitle"><i class="fas fa-book me-2"></i>Module Details</h5>
+            </div>
+            <div class="card-body" id="moduleDetails">
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Module Recommendations -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-newspaper me-2"></i>Recommended Articles</h5>
+            </div>
+            <div class="card-body">
+                <div id="recommendationsList">
+                    <div class="d-flex justify-content-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Article Detail Modal -->
+<div class="modal fade" id="articleDetailModal" tabindex="-1" aria-labelledby="articleDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="articleDetailModalLabel">Article Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="articleDetailContent">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="#" class="btn btn-primary" id="readFullArticleBtn" target="_blank">Read Full Article</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/module.js') }}"></script>
+<script>
+    // User ID for demo purposes - in a real app, this would come from authentication
+    const demoUserId = '65eef1234567890123456789';
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get module ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const moduleId = urlParams.get('id');
+        
+        if (!moduleId) {
+            window.location.href = '/';
+            return;
+        }
+        
+        // Load module details
+        loadModuleDetails(moduleId);
+        
+        // Load recommendations
+        loadModuleRecommendations(moduleId);
+    });
+    
+    // Load module details
+    function loadModuleDetails(moduleId) {
+        const moduleDetails = document.getElementById('moduleDetails');
+        
+        fetch('/api/modules')
+            .then(response => response.json())
+            .then(data => {
+                if (data.modules && data.modules.length > 0) {
+                    const module = data.modules.find(m => m._id === moduleId);
+                    
+                    if (module) {
+                        // Update title
+                        document.getElementById('moduleTitle').innerHTML = `
+                            <i class="fas fa-book me-2"></i>${module.code}: ${module.name}
+                        `;
+                        
+                        // Update details
+                        moduleDetails.innerHTML = `
+                            <div class="mb-4">
+                                <h4 class="mb-3">Description</h4>
+                                <p>${module.description}</p>
+                            </div>
+                            
+                            <div>
+                                <h4 class="mb-3">Key Topics</h4>
+                                <div class="d-flex flex-wrap gap-2">
+                                    ${module.keywords.map(keyword => 
+                                        `<span class="badge bg-secondary">${keyword}</span>`
+                                    ).join('')}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        moduleDetails.innerHTML = `
+                            <div class="alert alert-danger">Module not found.</div>
+                        `;
+                    }
+                } else {
+                    moduleDetails.innerHTML = `
+                        <div class="alert alert-danger">Failed to load module details.</div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading module details:', error);
+                moduleDetails.innerHTML = `
+                    <div class="alert alert-danger">Error loading module details. Please try again later.</div>
+                `;
+            });
+    }
+    
+    // Load module recommendations
+    function loadModuleRecommendations(moduleId) {
+        const recommendationsList = document.getElementById('recommendationsList');
+        
+        fetch(`/api/modules/${moduleId}/recommendations?limit=15`)
+            .then(response => response.json())
+            .then(data => {
+                recommendationsList.innerHTML = '';
+                
+                if (data.recommendations && data.recommendations.length > 0) {
+                    data.recommendations.forEach(article => {
+                        const articleDate = new Date(article.published_at);
+                        const formattedDate = articleDate.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                        
+                        const relevancePercentage = Math.round(article.relevance_score * 100);
+                        
+                        const articleItem = document.createElement('div');
+                        articleItem.className = 'card mb-3 article-card';
+                        articleItem.setAttribute('data-article-id', article._id);
+                        
+                        let imageHtml = '';
+                        if (article.image_url) {
+                            imageHtml = `
+                                <div class="row g-0">
+                                    <div class="col-md-4">
+                                        <img src="${article.image_url}" class="img-fluid rounded-start" alt="${article.title}">
+                                    </div>
+                                    <div class="col-md-8">
+                            `;
+                        }
+                        
+                        articleItem.innerHTML = `
+                            ${article.image_url ? imageHtml : '<div class="card-body">'}
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h5 class="card-title mb-0">${article.title}</h5>
+                                        <span class="badge bg-primary">${relevancePercentage}% Match</span>
+                                    </div>
+                                    <p class="card-text">${article.description || 'No description available.'}</p>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            <i class="fas fa-newspaper me-1"></i>${article.source_name} &bull;
+                                            <i class="far fa-calendar-alt me-1"></i>${formattedDate}
+                                        </small>
+                                    </p>
+                                    <button class="btn btn-sm btn-primary view-article-btn">Read More</button>
+                                </div>
+                            ${article.image_url ? '</div></div>' : ''}
+                        `;
+                        
+                        // Add event listener to the Read More button
+                        articleItem.querySelector('.view-article-btn').addEventListener('click', function() {
+                            viewArticleDetails(article._id, moduleId);
+                        });
+                        
+                        recommendationsList.appendChild(articleItem);
+                    });
+                } else {
+                    recommendationsList.innerHTML = `
+                        <div class="alert alert-info">No recommendations found for this module.</div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading module recommendations:', error);
+                recommendationsList.innerHTML = `
+                    <div class="alert alert-danger">Failed to load recommendations. Please try again later.</div>
+                `;
+            });
+    }
+    
+    // View article details
+    function viewArticleDetails(articleId, moduleId) {
+        const modalContent = document.getElementById('articleDetailContent');
+        const readFullArticleBtn = document.getElementById('readFullArticleBtn');
+        
+        // Show loading state
+        modalContent.innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        `;
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('articleDetailModal'));
+        modal.show();
+        
+        // Record interaction
+        recordInteraction(articleId, moduleId);
+        
+        // Fetch article details
+        fetch(`/api/articles/${articleId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.article) {
+                    const article = data.article;
+                    const articleDate = new Date(article.published_at);
+                    const formattedDate = articleDate.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                    
+                    // Update modal title
+                    document.getElementById('articleDetailModalLabel').textContent = article.title;
+                    
+                    // Update read full article button
+                    readFullArticleBtn.href = article.url;
+                    
+                    // Build article content
+                    let contentHtml = '';
+                    
+                    // Add image if available
+                    if (article.image_url) {
+                        contentHtml += `
+                            <div class="text-center mb-3">
+                                <img src="${article.image_url}" class="img-fluid rounded" alt="${article.title}" style="max-height: 300px;">
+                            </div>
+                        `;
+                    }
+                    
+                    // Add metadata
+                    contentHtml += `
+                        <div class="mb-3">
+                            <span class="badge bg-secondary me-2">
+                                <i class="fas fa-newspaper me-1"></i>${article.source_name}
+                            </span>
+                            <span class="badge bg-secondary">
+                                <i class="far fa-calendar-alt me-1"></i>${formattedDate}
+                            </span>
+                        </div>
+                    `;
+                    
+                    // Add description
+                    if (article.description) {
+                        contentHtml += `
+                            <div class="mb-3">
+                                <h6>Description</h6>
+                                <p class="lead">${article.description}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    // Add content if available
+                    if (article.content) {
+                        contentHtml += `
+                            <div class="mb-3">
+                                <h6>Content Preview</h6>
+                                <p>${article.content}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    // Add categories if available
+                    if (article.categories && article.categories.length > 0) {
+                        contentHtml += `
+                            <div class="mb-3">
+                                <h6>Categories</h6>
+                                <div>
+                        `;
+                        
+                        article.categories.forEach(category => {
+                            contentHtml += `
+                                <span class="badge bg-primary me-1">${category}</span>
+                            `;
+                        });
+                        
+                        contentHtml += `
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    modalContent.innerHTML = contentHtml;
+                } else {
+                    modalContent.innerHTML = `
+                        <div class="alert alert-danger">Article not found.</div>
+                    `;
+                    readFullArticleBtn.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading article details:', error);
+                modalContent.innerHTML = `
+                    <div class="alert alert-danger">Failed to load article details. Please try again later.</div>
+                `;
+                readFullArticleBtn.style.display = 'none';
+            });
+    }
+    
+    // Record user interaction with an article
+    function recordInteraction(articleId, moduleId) {
+        const interactionData = {
+            user_id: demoUserId,
+            article_id: articleId,
+            type: 'view'
+        };
+        
+        if (moduleId) {
+            interactionData.module_id = moduleId;
+        }
+        
+        fetch('/api/interaction', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(interactionData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Interaction recorded:', data);
+        })
+        .catch(error => {
+            console.error('Error recording interaction:', error);
+        });
+    }
+</script>
+{% endblock %}
