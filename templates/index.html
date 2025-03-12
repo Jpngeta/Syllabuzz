@@ -1,0 +1,837 @@
+{% extends "base.html" %}
+
+{% block title %}CS Articles Recommender - Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Hero Section -->
+    <div class="col-12 mb-4">
+        <div class="card bg-light">
+            <div class="card-body p-4">
+                <h1 class="display-5">Welcome to CS Articles Recommender</h1>
+                <p class="lead">Stay updated with the latest articles and news relevant to your Computer Science modules.</p>
+                <p>Our AI-powered recommendation system analyzes articles to find the most relevant content for your specific CS interests.</p>
+                
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    <button id="personalizeBtn" class="btn btn-primary">
+                        <i class="fas fa-user-cog me-2"></i>Personalize Recommendations
+                    </button>
+                    <a href="#featured-section" class="btn btn-outline-secondary">
+                        <i class="fas fa-newspaper me-2"></i>Browse Latest Articles
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Featured Modules -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-book me-2"></i>CS Modules</h5>
+            </div>
+            <div class="card-body">
+                <div id="modulesList">
+                    <p class="text-center text-muted">Loading modules...</p>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                <button id="loadAllModulesBtn" class="btn btn-sm btn-outline-primary w-100">View All Modules</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Latest Articles -->
+    <div class="col-md-8 mb-4" id="featured-section">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-newspaper me-2"></i>Latest Articles</h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="latestArticlesFilter" data-bs-toggle="dropdown" aria-expanded="false">
+                        All Categories
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="latestArticlesFilter">
+                        <li><a class="dropdown-item active" href="#" data-filter="all">All Categories</a></li>
+                        <li><a class="dropdown-item" href="#" data-filter="technology">Technology</a></li>
+                        <li><a class="dropdown-item" href="#" data-filter="science">Science</a></li>
+                        <li><a class="dropdown-item" href="#" data-filter="education">Education</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="latestArticlesList">
+                    <div class="d-flex justify-content-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                <button id="loadMoreArticlesBtn" class="btn btn-sm btn-outline-primary w-100">Load More Articles</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trending Section -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Trending Articles</h5>
+            </div>
+            <div class="card-body">
+                <div class="row" id="trendingArticlesList">
+                    <div class="col-12 text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Personalization Modal -->
+<div class="modal fade" id="personalizeModal" tabindex="-1" aria-labelledby="personalizeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="personalizeModalLabel">Personalize Your Recommendations</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Select the CS modules you're interested in:</p>
+                <form id="personalizeForm">
+                    <div id="personalizeModuleList">
+                        <p class="text-center text-muted">Loading modules...</p>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="savePreferencesBtn">Save Preferences</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Article Detail Modal -->
+<div class="modal fade" id="articleDetailModal" tabindex="-1" aria-labelledby="articleDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="articleDetailModalLabel">Article Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="articleDetailContent">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="#" class="btn btn-primary" id="readFullArticleBtn" target="_blank">Read Full Article</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+<script>
+    // User ID for demo purposes - in a real app, this would come from authentication
+    const demoUserId = '65eef1234567890123456789';
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load initial data
+        loadModules();
+        loadLatestArticles();
+        loadTrendingArticles();
+        
+        // Event listeners
+        document.getElementById('personalizeBtn').addEventListener('click', showPersonalizeModal);
+        document.getElementById('savePreferencesBtn').addEventListener('click', savePreferences);
+        document.getElementById('loadMoreArticlesBtn').addEventListener('click', loadMoreArticles);
+        document.getElementById('trendingLink').addEventListener('click', scrollToTrending);
+        document.getElementById('footerTrendingLink').addEventListener('click', scrollToTrending);
+        document.getElementById('searchForm').addEventListener('submit', handleSearch);
+        
+        // Filter latest articles by category
+        document.querySelectorAll('[data-filter]').forEach(element => {
+            element.addEventListener('click', function(e) {
+                e.preventDefault();
+                const filter = this.getAttribute('data-filter');
+                document.getElementById('latestArticlesFilter').textContent = 
+                    filter === 'all' ? 'All Categories' : filter.charAt(0).toUpperCase() + filter.slice(1);
+                loadLatestArticles(filter === 'all' ? null : filter);
+                
+                // Update active state
+                document.querySelectorAll('[data-filter]').forEach(el => {
+                    el.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+    });
+    
+    // Load modules for navigation and display
+    function loadModules() {
+        fetch('/api/modules')
+            .then(response => response.json())
+            .then(data => {
+                if (data.modules && data.modules.length > 0) {
+                    // Populate dropdown menu
+                    const dropdownMenu = document.getElementById('modulesDropdownMenu');
+                    dropdownMenu.innerHTML = '';
+                    
+                    data.modules.forEach(module => {
+                        const li = document.createElement('li');
+                        const a = document.createElement('a');
+                        a.className = 'dropdown-item';
+                        a.href = '#';
+                        a.textContent = `${module.code}: ${module.name}`;
+                        a.setAttribute('data-module-id', module._id);
+                        a.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            showModuleRecommendations(module._id, module.name);
+                        });
+                        li.appendChild(a);
+                        dropdownMenu.appendChild(li);
+                    });
+                    
+                    // Populate modules list
+                    const modulesList = document.getElementById('modulesList');
+                    modulesList.innerHTML = '';
+                    
+                    // Show first 5 modules only
+                    const displayModules = data.modules.slice(0, 5);
+                    
+                    displayModules.forEach(module => {
+                        const moduleItem = document.createElement('div');
+                        moduleItem.className = 'mb-3';
+                        moduleItem.innerHTML = `
+                            <h6 class="mb-1">${module.code}: ${module.name}</h6>
+                            <p class="text-muted small mb-2">${module.description.substring(0, 100)}...</p>
+                            <button class="btn btn-sm btn-outline-primary view-recommendations" 
+                                data-module-id="${module._id}" data-module-name="${module.name}">
+                                View Recommendations
+                            </button>
+                        `;
+                        modulesList.appendChild(moduleItem);
+                    });
+                    
+                    // Add event listeners for recommendation buttons
+                    document.querySelectorAll('.view-recommendations').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const moduleId = this.getAttribute('data-module-id');
+                            const moduleName = this.getAttribute('data-module-name');
+                            showModuleRecommendations(moduleId, moduleName);
+                        });
+                    });
+                    
+                    // Populate personalization modal
+                    const personalizeModuleList = document.getElementById('personalizeModuleList');
+                    personalizeModuleList.innerHTML = '';
+                    
+                    data.modules.forEach(module => {
+                        const moduleCheckbox = document.createElement('div');
+                        moduleCheckbox.className = 'form-check mb-2';
+                        moduleCheckbox.innerHTML = `
+                            <input class="form-check-input" type="checkbox" value="${module._id}" id="module${module._id}">
+                            <label class="form-check-label" for="module${module._id}">
+                                ${module.code}: ${module.name}
+                            </label>
+                        `;
+                        personalizeModuleList.appendChild(moduleCheckbox);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading modules:', error);
+                document.getElementById('modulesList').innerHTML = `
+                    <div class="alert alert-danger">Failed to load modules. Please try again later.</div>
+                `;
+            });
+    }
+    
+    // Load latest articles
+    let articlesPage = 1;
+    let currentCategory = null;
+    
+    function loadLatestArticles(category = null, reset = true) {
+        if (reset) {
+            articlesPage = 1;
+            currentCategory = category;
+        }
+        
+        const latestArticlesList = document.getElementById('latestArticlesList');
+        
+        if (reset) {
+            latestArticlesList.innerHTML = `
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Add loading indicator at bottom
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'd-flex justify-content-center mt-3';
+            loadingIndicator.innerHTML = `
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading more...</span>
+                </div>
+            `;
+            latestArticlesList.appendChild(loadingIndicator);
+        }
+        
+        let url = `/api/articles?limit=5&skip=${(articlesPage - 1) * 5}`;
+        if (category) {
+            url += `&category=${category}`;
+        }
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (reset) {
+                    latestArticlesList.innerHTML = '';
+                } else {
+                    // Remove loading indicator
+                    latestArticlesList.removeChild(latestArticlesList.lastChild);
+                }
+                
+                if (data.articles && data.articles.length > 0) {
+                    data.articles.forEach(article => {
+                        const articleDate = new Date(article.published_at);
+                        const formattedDate = articleDate.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                        
+                        const articleItem = document.createElement('div');
+                        articleItem.className = 'card mb-3 article-card';
+                        articleItem.setAttribute('data-article-id', article._id);
+                        
+                        let imageHtml = '';
+                        if (article.image_url) {
+                            imageHtml = `
+                                <div class="row g-0">
+                                    <div class="col-md-4">
+                                        <img src="${article.image_url}" class="img-fluid rounded-start" alt="${article.title}">
+                                    </div>
+                                    <div class="col-md-8">
+                            `;
+                        }
+                        
+                        articleItem.innerHTML = `
+                            ${article.image_url ? imageHtml : '<div class="card-body">'}
+                                <div class="card-body">
+                                    <h5 class="card-title">${article.title}</h5>
+                                    <p class="card-text">${article.description || 'No description available.'}</p>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            <i class="fas fa-newspaper me-1"></i>${article.source_name} &bull;
+                                            <i class="far fa-calendar-alt me-1"></i>${formattedDate}
+                                        </small>
+                                    </p>
+                                    <button class="btn btn-sm btn-primary view-article-btn">Read More</button>
+                                </div>
+                            ${article.image_url ? '</div></div>' : ''}
+                        `;
+                        
+                        // Add event listener to the Read More button
+                        articleItem.querySelector('.view-article-btn').addEventListener('click', function() {
+                            viewArticleDetails(article._id);
+                        });
+                        
+                        latestArticlesList.appendChild(articleItem);
+                    });
+                    
+                    // Enable/disable "Load More" button
+                    const loadMoreBtn = document.getElementById('loadMoreArticlesBtn');
+                    if (data.articles.length < 5) {
+                        loadMoreBtn.disabled = true;
+                        loadMoreBtn.textContent = 'No More Articles';
+                    } else {
+                        loadMoreBtn.disabled = false;
+                        loadMoreBtn.textContent = 'Load More Articles';
+                    }
+                    
+                    articlesPage++;
+                } else {
+                    if (reset) {
+                        latestArticlesList.innerHTML = `
+                            <div class="alert alert-info">No articles found.</div>
+                        `;
+                    }
+                    
+                    // Disable "Load More" button
+                    document.getElementById('loadMoreArticlesBtn').disabled = true;
+                    document.getElementById('loadMoreArticlesBtn').textContent = 'No More Articles';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading articles:', error);
+                if (reset) {
+                    latestArticlesList.innerHTML = `
+                        <div class="alert alert-danger">Failed to load articles. Please try again later.</div>
+                    `;
+                } else {
+                    // Remove loading indicator and show error
+                    latestArticlesList.removeChild(latestArticlesList.lastChild);
+                    const errorMessage = document.createElement('div');
+                    errorMessage.className = 'alert alert-danger mt-3';
+                    errorMessage.textContent = 'Failed to load more articles. Please try again later.';
+                    latestArticlesList.appendChild(errorMessage);
+                }
+            });
+    }
+    
+    // Load trending articles
+    function loadTrendingArticles() {
+        const trendingList = document.getElementById('trendingArticlesList');
+        
+        fetch('/api/trending?limit=4')
+            .then(response => response.json())
+            .then(data => {
+                trendingList.innerHTML = '';
+                
+                if (data.trending && data.trending.length > 0) {
+                    data.trending.forEach(article => {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-6 col-lg-3 mb-3';
+                        
+                        const card = document.createElement('div');
+                        card.className = 'card h-100 trending-card';
+                        card.setAttribute('data-article-id', article._id);
+                        
+                        let imageHtml = '';
+                        if (article.image_url) {
+                            imageHtml = `<img src="${article.image_url}" class="card-img-top" alt="${article.title}">`;
+                        }
+                        
+                        card.innerHTML = `
+                            ${imageHtml}
+                            <div class="card-body">
+                                <h6 class="card-title">${article.title}</h6>
+                                <p class="card-text small">${article.description ? article.description.substring(0, 100) + '...' : 'No description available.'}</p>
+                            </div>
+                            <div class="card-footer bg-white">
+                                <button class="btn btn-sm btn-outline-primary w-100 view-article-btn">View Article</button>
+                            </div>
+                        `;
+                        
+                        // Add event listener
+                        card.querySelector('.view-article-btn').addEventListener('click', function() {
+                            viewArticleDetails(article._id);
+                        });
+                        
+                        col.appendChild(card);
+                        trendingList.appendChild(col);
+                    });
+                } else {
+                    trendingList.innerHTML = `
+                        <div class="col-12">
+                            <div class="alert alert-info">No trending articles found.</div>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading trending articles:', error);
+                trendingList.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-danger">Failed to load trending articles. Please try again later.</div>
+                    </div>
+                `;
+            });
+    }
+    
+    // Show module recommendations
+    function showModuleRecommendations(moduleId, moduleName) {
+        // Clear current articles and show loading
+        const latestArticlesList = document.getElementById('latestArticlesList');
+        latestArticlesList.innerHTML = `
+            <div class="d-flex justify-content-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        `;
+        
+        // Update header
+        const header = document.querySelector('.card-header h5');
+        header.innerHTML = `<i class="fas fa-book me-2"></i>Recommendations for ${moduleName}`;
+        
+        // Fetch recommendations
+        fetch(`/api/modules/${moduleId}/recommendations?limit=10`)
+            .then(response => response.json())
+            .then(data => {
+                latestArticlesList.innerHTML = '';
+                
+                if (data.recommendations && data.recommendations.length > 0) {
+                    data.recommendations.forEach(article => {
+                        const articleDate = new Date(article.published_at);
+                        const formattedDate = articleDate.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                        
+                        const relevancePercentage = Math.round(article.relevance_score * 100);
+                        
+                        const articleItem = document.createElement('div');
+                        articleItem.className = 'card mb-3 article-card';
+                        articleItem.setAttribute('data-article-id', article._id);
+                        
+                        let imageHtml = '';
+                        if (article.image_url) {
+                            imageHtml = `
+                                <div class="row g-0">
+                                    <div class="col-md-4">
+                                        <img src="${article.image_url}" class="img-fluid rounded-start" alt="${article.title}">
+                                    </div>
+                                    <div class="col-md-8">
+                            `;
+                        }
+                        
+                        articleItem.innerHTML = `
+                            ${article.image_url ? imageHtml : '<div class="card-body">'}
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h5 class="card-title mb-0">${article.title}</h5>
+                                        <span class="badge bg-primary">${relevancePercentage}% Match</span>
+                                    </div>
+                                    <p class="card-text">${article.description || 'No description available.'}</p>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            <i class="fas fa-newspaper me-1"></i>${article.source_name} &bull;
+                                            <i class="far fa-calendar-alt me-1"></i>${formattedDate}
+                                        </small>
+                                    </p>
+                                    <button class="btn btn-sm btn-primary view-article-btn">Read More</button>
+                                </div>
+                            ${article.image_url ? '</div></div>' : ''}
+                        `;
+                        
+                        // Add event listener to the Read More button
+                        articleItem.querySelector('.view-article-btn').addEventListener('click', function() {
+                            viewArticleDetails(article._id, moduleId);
+                        });
+                        
+                        latestArticlesList.appendChild(articleItem);
+                    });
+                    
+                    // Hide "Load More" button
+                    document.getElementById('loadMoreArticlesBtn').style.display = 'none';
+                } else {
+                    latestArticlesList.innerHTML = `
+                        <div class="alert alert-info">No recommendations found for this module.</div>
+                    `;
+                    document.getElementById('loadMoreArticlesBtn').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading module recommendations:', error);
+                latestArticlesList.innerHTML = `
+                    <div class="alert alert-danger">Failed to load recommendations. Please try again later.</div>
+                `;
+            });
+    }
+    
+    // View article details
+    function viewArticleDetails(articleId, moduleId = null) {
+        const modalContent = document.getElementById('articleDetailContent');
+        const readFullArticleBtn = document.getElementById('readFullArticleBtn');
+        
+        // Show loading state
+        modalContent.innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        `;
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('articleDetailModal'));
+        modal.show();
+        
+        // Record interaction
+        recordInteraction(articleId, moduleId);
+        
+        // Fetch article details
+        fetch(`/api/articles/${articleId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.article) {
+                    const article = data.article;
+                    const articleDate = new Date(article.published_at);
+                    const formattedDate = articleDate.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                    
+                    // Update modal title
+                    document.getElementById('articleDetailModalLabel').textContent = article.title;
+                    
+                    // Update read full article button
+                    readFullArticleBtn.href = article.url;
+                    
+                    // Build article content
+                    let contentHtml = '';
+                    
+                    // Add image if available
+                    if (article.image_url) {
+                        contentHtml += `
+                            <div class="text-center mb-3">
+                                <img src="${article.image_url}" class="img-fluid rounded" alt="${article.title}" style="max-height: 300px;">
+                            </div>
+                        `;
+                    }
+                    
+                    // Add metadata
+                    contentHtml += `
+                        <div class="mb-3">
+                            <span class="badge bg-secondary me-2">
+                                <i class="fas fa-newspaper me-1"></i>${article.source_name}
+                            </span>
+                            <span class="badge bg-secondary">
+                                <i class="far fa-calendar-alt me-1"></i>${formattedDate}
+                            </span>
+                        </div>
+                    `;
+                    
+                    // Add description
+                    if (article.description) {
+                        contentHtml += `
+                            <div class="mb-3">
+                                <h6>Description</h6>
+                                <p class="lead">${article.description}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    // Add content if available
+                    if (article.content) {
+                        contentHtml += `
+                            <div class="mb-3">
+                                <h6>Content Preview</h6>
+                                <p>${article.content}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    // Add categories if available
+                    if (article.categories && article.categories.length > 0) {
+                        contentHtml += `
+                            <div class="mb-3">
+                                <h6>Categories</h6>
+                                <div>
+                        `;
+                        
+                        article.categories.forEach(category => {
+                            contentHtml += `
+                                <span class="badge bg-primary me-1">${category}</span>
+                            `;
+                        });
+                        
+                        contentHtml += `
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    modalContent.innerHTML = contentHtml;
+                } else {
+                    modalContent.innerHTML = `
+                        <div class="alert alert-danger">Article not found.</div>
+                    `;
+                    readFullArticleBtn.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading article details:', error);
+                modalContent.innerHTML = `
+                    <div class="alert alert-danger">Failed to load article details. Please try again later.</div>
+                `;
+                readFullArticleBtn.style.display = 'none';
+            });
+    }
+    
+    // Record user interaction with an article
+    function recordInteraction(articleId, moduleId = null) {
+        const interactionData = {
+            user_id: demoUserId,
+            article_id: articleId,
+            type: 'view'
+        };
+        
+        if (moduleId) {
+            interactionData.module_id = moduleId;
+        }
+        
+        fetch('/api/interaction', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(interactionData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Interaction recorded:', data);
+        })
+        .catch(error => {
+            console.error('Error recording interaction:', error);
+        });
+    }
+    
+    // Load more articles
+    function loadMoreArticles() {
+        loadLatestArticles(currentCategory, false);
+    }
+    
+    // Show personalize modal
+    function showPersonalizeModal() {
+        const modal = new bootstrap.Modal(document.getElementById('personalizeModal'));
+        modal.show();
+    }
+    
+    // Save user preferences
+    function savePreferences() {
+        const selectedModules = [];
+        document.querySelectorAll('#personalizeModuleList input:checked').forEach(checkbox => {
+            selectedModules.push(checkbox.value);
+        });
+        
+        if (selectedModules.length === 0) {
+            alert('Please select at least one module');
+            return;
+        }
+        
+        // In a real app, this would save to the user profile in the database
+        // For demo purposes, we'll just show a success message and close the modal
+        alert('Preferences saved! Your recommendations will be updated.');
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('personalizeModal'));
+        modal.hide();
+        
+        // Reload the page to show personalized content
+        // In a real app, this would update content without a page reload
+        window.location.reload();
+    }
+    
+    // Scroll to trending section
+    function scrollToTrending(e) {
+        e.preventDefault();
+        document.querySelector('.card-header:has(>.fa-chart-line)').scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // Handle search
+    function handleSearch(e) {
+        e.preventDefault();
+        const searchQuery = document.getElementById('searchInput').value.trim();
+        
+        if (!searchQuery) {
+            return;
+        }
+        
+        // Clear current articles and show loading
+        const latestArticlesList = document.getElementById('latestArticlesList');
+        latestArticlesList.innerHTML = `
+            <div class="d-flex justify-content-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        `;
+        
+        // Update header
+        const headerTitle = document.querySelector('.card-header h5');
+        headerTitle.innerHTML = `<i class="fas fa-search me-2"></i>Search Results: "${searchQuery}"`;
+        
+        // Hide the category filter
+        document.getElementById('latestArticlesFilter').style.display = 'none';
+        
+        // Fetch search results
+        fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=20`)
+            .then(response => response.json())
+            .then(data => {
+                latestArticlesList.innerHTML = '';
+                
+                if (data.articles && data.articles.length > 0) {
+                    data.articles.forEach(article => {
+                        const articleDate = new Date(article.published_at);
+                        const formattedDate = articleDate.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                        
+                        const articleItem = document.createElement('div');
+                        articleItem.className = 'card mb-3 article-card';
+                        articleItem.setAttribute('data-article-id', article._id);
+                        
+                        let imageHtml = '';
+                        if (article.image_url) {
+                            imageHtml = `
+                                <div class="row g-0">
+                                    <div class="col-md-4">
+                                        <img src="${article.image_url}" class="img-fluid rounded-start" alt="${article.title}">
+                                    </div>
+                                    <div class="col-md-8">
+                            `;
+                        }
+                        
+                        articleItem.innerHTML = `
+                            ${article.image_url ? imageHtml : '<div class="card-body">'}
+                                <div class="card-body">
+                                    <h5 class="card-title">${article.title}</h5>
+                                    <p class="card-text">${article.description || 'No description available.'}</p>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            <i class="fas fa-newspaper me-1"></i>${article.source_name} &bull;
+                                            <i class="far fa-calendar-alt me-1"></i>${formattedDate}
+                                        </small>
+                                    </p>
+                                    <button class="btn btn-sm btn-primary view-article-btn">Read More</button>
+                                </div>
+                            ${article.image_url ? '</div></div>' : ''}
+                        `;
+                        
+                        // Add event listener to the Read More button
+                        articleItem.querySelector('.view-article-btn').addEventListener('click', function() {
+                            viewArticleDetails(article._id);
+                        });
+                        
+                        latestArticlesList.appendChild(articleItem);
+                    });
+                    
+                    // Hide "Load More" button
+                    document.getElementById('loadMoreArticlesBtn').style.display = 'none';
+                } else {
+                    latestArticlesList.innerHTML = `
+                        <div class="alert alert-info">No articles found matching "${searchQuery}".</div>
+                    `;
+                    document.getElementById('loadMoreArticlesBtn').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error searching articles:', error);
+                latestArticlesList.innerHTML = `
+                    <div class="alert alert-danger">Failed to search articles. Please try again later.</div>
+                `;
+                document.getElementById('loadMoreArticlesBtn').style.display = 'none';
+            });
+    }
+</script>
+{% endblock %}
