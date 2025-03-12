@@ -5,8 +5,7 @@ from werkzeug.utils import secure_filename
 import secrets
 import os
 import threading
-from services.scheduler import fetch_category_articles, start_scheduler
-# from tasks import start_scheduler
+from services.scheduler import start_enhanced_scheduler  # Updated scheduler
 import logging
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
@@ -16,44 +15,46 @@ from functools import wraps
 from tasks import start_scheduler
 import json
 
+# Import existing database functions
 from db import (
     create_user, find_user_by_email, update_user_password, verify_password,
-    create_reset_token, find_reset_token, delete_reset_token, EmailService,mark_notification_read,
+    create_reset_token, find_reset_token, delete_reset_token, EmailService, mark_notification_read,
     store_article, update_article_metrics, record_reading_history, toggle_bookmark,
     update_bookmark, create_cluster, update_cluster_trending, add_comment, like_comment,
     create_notification, mark_all_notifications_read, record_search, record_search_click, db
 )
 
-# Add these imports
+from services.content_service import preload_categories
+from services import article_service
+from services.news_service import NewsAPIClientService
+from dotenv import load_dotenv
+from services.embedding_service import EmbeddingService
+from services.recommendation import RecommendationEngine
 from services import article_service
 
-# Add these imports at the top of your file
-from services.news_service import NewsAPIClientService
-import os
-from dotenv import load_dotenv
-
-# Add this near your imports at the top
-from services.scheduler import start_scheduler
-
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 
 # Initialize the news API service
 news_service = NewsAPIClientService(api_key=os.environ.get('NEWS_API_KEY'))
 
-# Create Flask app first
+# Create Flask app
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
+with app.app_context():
+    # Initialize anything that needs the application context
+    pass
+
+# Set up CSRF protection
 csrf = CSRFProtect(app)
-# csrf.exempt(toggle_bookmark)
-# csrf.exempt(record_article_view)
-# csrf.exempt(bookmark_note)
+csrf.exempt(toggle_bookmark)
 logging.basicConfig(level=logging.ERROR)
 email_service = EmailService()
 
-# Add this function near the top of your file after your imports
+
+# JSON data helper function
 def get_json_data():
     """Safely get JSON data from request, even if content-type is not set"""
     try:
@@ -70,7 +71,25 @@ def get_json_data():
         app.logger.error(f"Error parsing JSON data: {str(e)}")
         return {}
 
-# After initializing csrf with csrf = CSRFProtect(app)
+@app.before_request
+def load_user():
+    """Load user data before each request if user is logged in"""
+    # Skip for login-related endpoints
+    if request.endpoint in ['login', 'signup', 'static', 'forgot_password', 'reset_password']:
+        g.user = None
+        return
+        
+    if 'user_id' in session:
+        try:
+            user_id = session.get('user_id')
+            user = db.users.find_one({'_id': ObjectId(user_id)})
+            g.user = user
+        except Exception as e:
+            g.user = None
+    else:
+        g.user = None
+
+# CSRF token for templates
 @app.context_processor
 def inject_csrf_token():
     """Make csrf_token available to all templates"""
@@ -91,7 +110,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Update this decorator to handle AJAX requests properly
+# Authentication decorator
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -132,26 +151,7 @@ def check_session_expiry():
             flash("Your session has expired. Please log in again.", "error")
             return redirect(url_for('login'))
 
-# Add this function near the top of your file, after your app initialization
-@app.before_request
-def load_user():
-    """Load user data before each request if user is logged in"""
-    # Skip for login-related endpoints
-    if request.endpoint in ['login', 'signup', 'static', 'forgot_password', 'reset_password']:
-        g.user = None
-        return
-        
-    if 'user_id' in session:
-        try:
-            user_id = session.get('user_id')
-            user = db.users.find_one({'_id': ObjectId(user_id)})
-            g.user = user
-        except Exception as e:
-            g.user = None
-    else:
-        g.user = None
 
-# Add this context processor to make user data available in all templates
 @app.context_processor
 def inject_user():
     """Make user data available to all templates"""
@@ -159,26 +159,36 @@ def inject_user():
         return {'user': g.user}
     return {'user': None}
 
-# Add this after app initialization but before your routes
-with app.app_context():
-    # Initialize anything that needs the application context
-    pass
 
 # Create a function to initialize your app
 def init_app(app):
     """Initialize the Flask application with all required components"""
-    # Start the scheduler when the app starts
-    start_scheduler()
+    try:
+        # Initialize embedding service
+        app.embedding_service = EmbeddingService()
+        
+        # Initialize recommendation engine
+        app.recommendation_engine = RecommendationEngine(db, app.embedding_service)
+        
+        # Start enhanced scheduler with recommendation capabilities
+        start_enhanced_scheduler(
+            recommendation_engine=app.recommendation_engine,
+            embedding_service=app.embedding_service
+        )
+        
+        app.logger.info("Recommendation system initialized successfully")
+    except Exception as e:
+        app.logger.error(f"Error initializing recommendation system: {str(e)}")
+        app.logger.info("Application will run without recommendation features")
 
-# Use the new pattern with app events
-# @app.before_serving
-# def before_serving():
-#     """Run before the app starts serving requests"""
-#     app.logger.info("Starting background tasks")
-#     start_scheduler()
+with app.app_context():
+    # Initialize anything that needs the application context
+    pass
 
+# Existing routes
 @app.route("/", methods=["GET", "POST"])
 def login():
+    # Existing login logic
     form = FlaskForm()
     if 'user_id' in session:
         # If already logged in, redirect to dashboard
@@ -346,7 +356,7 @@ def dashboard():
         app.logger.error(f"Dashboard error: {str(e)}")
         flash('Error loading dashboard', 'error')
         return redirect(url_for('articles'))
-
+    
 @app.route('/api/user/settings', methods=['PUT'])
 @login_required
 def update_settings():
@@ -363,8 +373,6 @@ def update_settings():
     else:
         return jsonify({"error": "Failed to update settings"}), 500
 
-# Add imports at the top
-from services import article_service
 
 @app.route('/articles')
 def articles():
@@ -1388,23 +1396,23 @@ def preload_categories():
     except Exception as e:
         app.logger.error(f"Error in preload_categories: {str(e)}")
 
-def start_app():
-    """Start background processes and initialize app components"""
-    try:
-        app.logger.info("Starting application processes...")
-        # Preload categories within app context
-        with app.app_context():
-            try:
-                preload_categories()
-            except Exception as e:
-                app.logger.error(f"Error preloading categories: {str(e)}")
+# def start_app():
+#     """Start background processes and initialize app components"""
+#     try:
+#         app.logger.info("Starting application processes...")
+#         # Preload categories within app context
+#         with app.app_context():
+#             try:
+#                 preload_categories()
+#             except Exception as e:
+#                 app.logger.error(f"Error preloading categories: {str(e)}")
         
-        # Start scheduler in a separate thread
-        threading.Thread(target=start_scheduler, daemon=True).start()
+#         # Start scheduler in a separate thread
+#         threading.Thread(target=start_scheduler, daemon=True).start()
         
-        app.logger.info("Application initialization complete")
-    except Exception as e:
-        app.logger.error(f"Error during application startup: {str(e)}")
+#         app.logger.info("Application initialization complete")
+#     except Exception as e:
+#         app.logger.error(f"Error during application startup: {str(e)}")
 
 @app.route('/admin/articles')
 def admin_articles():
@@ -1514,9 +1522,397 @@ csrf.exempt(toggle_bookmark)
 csrf.exempt(record_article_view)
 csrf.exempt(bookmark_note)
 
-if __name__ == '__main__':
-    # Start background processes before running the app
-    start_app()
+
+# Add new routes for CS module recommendations
+@app.route('/modules')
+@login_required
+def cs_modules():
+    """Display available CS modules for the student"""
+    try:
+        # Get all available modules
+        modules = list(db.modules.find())
+        
+        # Get user's enrolled modules
+        user_id = session.get('user_id')
+        user = db.users.find_one({'_id': ObjectId(user_id)})
+        
+        # Get user's module IDs (default to empty list if not found)
+        user_module_ids = user.get('modules', [])
+        
+        # Mark which modules the user is enrolled in
+        for module in modules:
+            module['_id'] = str(module['_id'])
+            module['is_enrolled'] = module['_id'] in [str(m_id) for m_id in user_module_ids]
+        
+        return render_template('cs_modules.html', 
+                              modules=modules)
+    except Exception as e:
+        app.logger.error(f"Error in modules route: {str(e)}")
+        flash('Error loading CS modules', 'error')
+        return redirect(url_for('dashboard'))
+
+@app.route('/module/<module_id>')
+@login_required
+def module_detail(module_id):
+    """Show detailed view of a module with recommended articles"""
+    try:
+        # Get the module
+        module = db.modules.find_one({'_id': ObjectId(module_id)})
+        if not module:
+            flash('Module not found', 'error')
+            return redirect(url_for('cs_modules'))
+        
+        # Get recommended articles for this module
+        recommended_articles = []
+        if hasattr(app, 'recommendation_engine'):
+            recommended_articles = app.recommendation_engine.get_module_recommendations(module_id, limit=10)
+        else:
+            # Fallback if recommendation engine is not available
+            # Find articles with module keywords using text search
+            keyword_query = ' '.join(module.get('keywords', []))
+            if keyword_query:
+                recommended_articles = list(db.articles.find(
+                    {'$text': {'$search': keyword_query}},
+                    {'score': {'$meta': 'textScore'}}
+                ).sort([('score', {'$meta': 'textScore'})]).limit(10))
+            else:
+                # Just get recent CS articles if no keywords
+                recommended_articles = list(db.articles.find(
+                    {'categories': {'$in': ['technology', 'science']}}
+                ).sort('published_at', -1).limit(10))
+        
+        # Format article IDs for template
+        for article in recommended_articles:
+            article['_id'] = str(article['_id'])
+        
+        # Get user bookmarks
+        bookmarked_articles = []
+        if 'user_id' in session:
+            user_id = session.get('user_id')
+            bookmarks = list(db.bookmarks.find({"user_id": user_id}))
+            bookmarked_articles = [str(b["article_id"]) for b in bookmarks]
+            
+        return render_template('module_detail.html',
+                              module=module,
+                              recommended_articles=recommended_articles,
+                              bookmarked_articles=bookmarked_articles)
+    except Exception as e:
+        app.logger.error(f"Error in module detail route: {str(e)}")
+        flash('Error loading module details', 'error')
+        return redirect(url_for('cs_modules'))
+
+# API route for module enrollment
+@app.route('/api/module/enroll', methods=['POST'])
+@login_required
+def enroll_module():
+    """Enroll a user in a CS module"""
+    try:
+        data = get_json_data()
+        module_id = data.get('module_id')
+        
+        if not module_id:
+            return jsonify({"error": "Module ID is required"}), 400
+        
+        # Get the user
+        user_id = session.get('user_id')
+        
+        # Add module to user's modules
+        result = db.users.update_one(
+            {'_id': ObjectId(user_id)},
+            {'$addToSet': {'modules': ObjectId(module_id)}}
+        )
+        
+        if result.modified_count > 0:
+            return jsonify({"success": True, "message": "Enrolled successfully"})
+        else:
+            # User may already be enrolled
+            return jsonify({"success": True, "message": "Already enrolled"})
+    except Exception as e:
+        app.logger.error(f"Error enrolling in module: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/module/unenroll', methods=['POST'])
+@login_required
+def unenroll_module():
+    """Unenroll a user from a CS module"""
+    try:
+        data = get_json_data()
+        module_id = data.get('module_id')
+        
+        if not module_id:
+            return jsonify({"error": "Module ID is required"}), 400
+        
+        # Get the user
+        user_id = session.get('user_id')
+        
+        # Remove module from user's modules
+        result = db.users.update_one(
+            {'_id': ObjectId(user_id)},
+            {'$pull': {'modules': ObjectId(module_id)}}
+        )
+        
+        if result.modified_count > 0:
+            return jsonify({"success": True, "message": "Unenrolled successfully"})
+        else:
+            return jsonify({"success": True, "message": "Not enrolled"})
+    except Exception as e:
+        app.logger.error(f"Error unenrolling from module: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/my-modules')
+@login_required
+def my_modules():
+    """Show the user's enrolled modules with personalized recommendations"""
+    try:
+        # Get user's enrolled modules
+        user_id = session.get('user_id')
+        user = db.users.find_one({'_id': ObjectId(user_id)})
+        
+        if not user or 'modules' not in user:
+            flash('No modules found. Please enroll in some CS modules.', 'info')
+            return redirect(url_for('cs_modules'))
+        
+        # Get full module data
+        user_modules = []
+        for module_id in user.get('modules', []):
+            module = db.modules.find_one({'_id': module_id})
+            if module:
+                # Convert ObjectId to string
+                module['_id'] = str(module['_id'])
+                
+                # Get recommendations for this module
+                if hasattr(app, 'recommendation_engine'):
+                    recommendations = app.recommendation_engine.get_module_recommendations(str(module_id), limit=5)
+                    for article in recommendations:
+                        article['_id'] = str(article['_id'])
+                else:
+                    # Fallback
+                    keyword_query = ' '.join(module.get('keywords', []))
+                    recommendations = list(db.articles.find(
+                        {'$text': {'$search': keyword_query}},
+                        {'score': {'$meta': 'textScore'}}
+                    ).sort([('score', {'$meta': 'textScore'})]).limit(5))
+                
+                module['recommendations'] = recommendations
+                user_modules.append(module)
+        
+        # Get user bookmarks
+        bookmarked_articles = []
+        bookmarks = list(db.bookmarks.find({"user_id": user_id}))
+        bookmarked_articles = [str(b["article_id"]) for b in bookmarks]
+        
+        return render_template('my_modules.html',
+                              modules=user_modules,
+                              bookmarked_articles=bookmarked_articles)
+    except Exception as e:
+        app.logger.error(f"Error in my modules route: {str(e)}")
+        flash('Error loading your modules', 'error')
+        return redirect(url_for('dashboard'))
+
+# API route for personalized recommendations across all modules
+@app.route('/api/recommended')
+@login_required
+def get_personalized_recommendations():
+    """Get personalized recommendations across all modules"""
+    try:
+        # Get limit parameter
+        limit = int(request.args.get('limit', 10))
+        
+        # Get user ID
+        user_id = session.get('user_id')
+        
+        # Get recommendations
+        recommendations = []
+        if hasattr(app, 'recommendation_engine'):
+            recommendations = app.recommendation_engine.get_user_recommendations(user_id, limit)
+        else:
+            # Fallback to basic recommendations
+            user = db.users.find_one({'_id': ObjectId(user_id)})
+            if user and 'modules' in user and user['modules']:
+                # Get recent articles based on user's module keywords
+                modules = list(db.modules.find({'_id': {'$in': user['modules']}}))
+                keywords = []
+                for module in modules:
+                    keywords.extend(module.get('keywords', []))
+                
+                if keywords:
+                    keyword_query = ' '.join(keywords)
+                    recommendations = list(db.articles.find(
+                        {'$text': {'$search': keyword_query}},
+                        {'score': {'$meta': 'textScore'}}
+                    ).sort([('score', {'$meta': 'textScore'})]).limit(limit))
+                else:
+                    # Just get recent CS articles
+                    recommendations = list(db.articles.find(
+                        {'categories': {'$in': ['technology', 'science']}}
+                    ).sort('published_at', -1).limit(limit))
+            else:
+                # Just get recent articles
+                recommendations = list(db.articles.find().sort('published_at', -1).limit(limit))
+        
+        # Format recommendations for JSON response
+        formatted_recommendations = []
+        for rec in recommendations:
+            formatted_recommendations.append({
+                'id': str(rec['_id']),
+                'title': rec.get('title', ''),
+                'description': rec.get('description', ''),
+                'summary': rec.get('summary', ''),
+                'url': rec.get('url', ''),
+                'source': rec.get('source_name', ''),
+                'image_url': rec.get('image_url', ''),
+                'published_date': str(rec.get('published_at', '')),
+                'categories': rec.get('categories', [])
+            })
+        
+        return jsonify({'recommendations': formatted_recommendations})
+    except Exception as e:
+        app.logger.error(f"Error getting personalized recommendations: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# Route for admin to add new CS modules
+@app.route('/admin/module/create', methods=['GET', 'POST'])
+@login_required
+def admin_create_module():
+    """Admin page to create new CS modules"""
+    # Check if user is admin
+    user_email = session.get('user_email')
+    success, user_data = find_user_by_email(user_email)
     
-    # Run the Flask app
-    app.run(debug=True, host="192.168.137.235")
+    if not success or not user_data.get('is_admin', False):
+        flash('You do not have permission to access this page', 'error')
+        return redirect(url_for('dashboard'))
+    
+    form = FlaskForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        # Get form data
+        name = request.form.get('name')
+        code = request.form.get('code')
+        description = request.form.get('description', '')
+        keywords = request.form.get('keywords', '').split(',')
+        keywords = [k.strip() for k in keywords if k.strip()]
+        
+        if not all([name, code, keywords]):
+            flash('Name, code, and keywords are required', 'error')
+            return render_template('admin/create_module.html', form=form)
+        
+        # Create module document
+        module = {
+            'name': name,
+            'code': code,
+            'description': description,
+            'keywords': keywords,
+            'created_at': datetime.utcnow(),
+            'updated_at': datetime.utcnow()
+        }
+        
+        # Generate embedding if embedding service is available
+        if hasattr(app, 'embedding_service'):
+            module_text = name + ' ' + description + ' ' + ' '.join(keywords)
+            embedding = app.embedding_service.generate_embedding(module_text)
+            module['vector_embedding'] = embedding.tolist()
+        
+        # Insert into database
+        db.modules.insert_one(module)
+        
+        flash(f'Module "{name}" created successfully', 'success')
+        return redirect(url_for('admin_modules'))
+    
+    return render_template('admin/create_module.html', form=form)
+
+@app.route('/admin/modules')
+@login_required
+def admin_modules():
+    """Admin page to manage CS modules"""
+    # Check if user is admin
+    user_email = session.get('user_email')
+    success, user_data = find_user_by_email(user_email)
+    
+    if not success or not user_data.get('is_admin', False):
+        flash('You do not have permission to access this page', 'error')
+        return redirect(url_for('dashboard'))
+    
+    # Get all modules
+    modules = list(db.modules.find())
+    
+    # Process for display
+    for module in modules:
+        module['_id'] = str(module['_id'])
+        module['created_at'] = module.get('created_at', datetime.utcnow()).strftime('%Y-%m-%d %H:%M:%S')
+        module['updated_at'] = module.get('updated_at', datetime.utcnow()).strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Count users enrolled in this module
+        module['enrolled_count'] = db.users.count_documents({'modules': module['_id']})
+    
+    return render_template('admin/modules.html', modules=modules)
+
+# Record article interactions for recommendation system
+@app.route('/api/interaction', methods=['POST'])
+@login_required
+def record_interaction():
+    """Record user interaction with article for recommendation system"""
+    try:
+        data = get_json_data()
+        article_id = data.get('article_id')
+        interaction_type = data.get('type', 'view')  # view, bookmark, like, share
+        module_id = data.get('module_id')  # Optional: module context
+        
+        if not article_id:
+            return jsonify({"error": "Article ID is required"}), 400
+        
+        # Get user ID
+        user_id = session.get('user_id')
+        
+        # Record interaction
+        interaction = {
+            'user_id': user_id,
+            'article_id': ObjectId(article_id),
+            'interaction_type': interaction_type,
+            'created_at': datetime.utcnow()
+        }
+        
+        if module_id:
+            interaction['module_id'] = ObjectId(module_id)
+        
+        # Insert the interaction
+        db.interactions.insert_one(interaction)
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        app.logger.error(f"Error recording interaction: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+# Exempt AJAX routes from CSRF
+csrf.exempt(toggle_bookmark)
+csrf.exempt(record_article_view)
+csrf.exempt(bookmark_note)
+csrf.exempt(record_interaction)
+csrf.exempt(enroll_module)
+csrf.exempt(unenroll_module)
+
+# Initialize and start the app
+def start_app():
+    """Start background processes and initialize app components"""
+    try:
+        app.logger.info("Starting application processes...")
+
+        # Check if CS module recommendation collections exist
+        if "modules" not in db.list_collection_names() or db.modules.count_documents({}) == 0:
+            from db import setup_cs_recommendation_collections, create_sample_cs_modules
+            setup_cs_recommendation_collections()
+            create_sample_cs_modules()
+            app.logger.info("CS module recommendation collections initialized")
+
+        # Preload categories within app context
+        with app.app_context():
+            try:
+                # preload_categories()
+                # Initialize recommendation system
+                init_app(app)
+            except Exception as e:
+                app.logger.error(f"Error during initialization: {str(e)}")
+        
+        app.logger.info("Application initialization complete")
+    except Exception as e:
+        app.logger.error(f"Error during application startup: {str(e)}")
+

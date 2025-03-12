@@ -708,3 +708,105 @@ def setup_database_indexes():
     # Search history indexes
     db.search_history.create_index([("user_id", 1), ("created_at", -1)])
     db.search_history.create_index("query")
+
+
+def setup_cs_recommendation_collections():
+    """Setup collections and indexes needed for CS module recommendation system"""
+    print("Setting up CS recommendation collections...")
+    
+    # Create collections if they don't exist
+    collections = ["modules", "interactions", "module_article_relevance"]
+    existing_collections = db.list_collection_names()
+    
+    for collection in collections:
+        if collection not in existing_collections:
+            print(f"Creating collection: {collection}")
+            db.create_collection(collection)
+    
+    # Create indexes for Modules collection
+    print("Creating indexes for modules collection...")
+    db.modules.create_index("code", unique=True)
+    db.modules.create_index("keywords")
+    
+    # Create indexes for Interactions collection
+    print("Creating indexes for interactions collection...")
+    db.interactions.create_index([("user_id", 1), ("created_at", -1)])
+    db.interactions.create_index([("user_id", 1), ("article_id", 1)])
+    db.interactions.create_index([("user_id", 1), ("module_id", 1)])
+    db.interactions.create_index("interaction_type")
+    
+    # Create indexes for Module-Article Relevance collection
+    print("Creating indexes for module_article_relevance collection...")
+    db.module_article_relevance.create_index([("module_id", 1), ("article_id", 1)], unique=True)
+    db.module_article_relevance.create_index([("module_id", 1), ("relevance_score", -1)])
+    
+    # Try to set up vector search if using MongoDB Atlas
+    try:
+        print("Attempting to set up vector search indexes...")
+        db.command({
+            "createIndexes": "articles",
+            "indexes": [{
+                "key": { "vector_embedding": "hnsw" },
+                "name": "vector_embedding_index",
+                "params": {
+                    "dimensions": 384,
+                    "metric": "cosine"
+                }
+            }]
+        })
+        
+        db.command({
+            "createIndexes": "modules",
+            "indexes": [{
+                "key": { "vector_embedding": "hnsw" },
+                "name": "vector_embedding_index",
+                "params": {
+                    "dimensions": 384,
+                    "metric": "cosine"
+                }
+            }]
+        })
+        
+        print("Vector search indexes created successfully")
+    except Exception as e:
+        print(f"Note: Could not create vector search indexes: {str(e)}")
+        print("This is normal if you're not using MongoDB Atlas with vector search capability.")
+        
+    print("CS recommendation collections setup complete!")
+
+# Function to create sample modules
+def create_sample_cs_modules():
+    """Create some sample CS modules if none exist"""
+    if db.modules.count_documents({}) == 0:
+        print("Creating sample CS modules...")
+        
+        modules = [
+            {
+                "name": "Data Structures and Algorithms",
+                "code": "CS2040",
+                "description": "A study of fundamental data structures and algorithms including lists, stacks, queues, trees, graphs, sorting and searching.",
+                "keywords": ["algorithms", "data structures", "sorting", "searching", "complexity analysis", "trees", "graphs"],
+                "created_at": datetime.now(),
+                "updated_at": datetime.now()
+            },
+            {
+                "name": "Mobile Computing",
+                "code": "CS4261",
+                "description": "Design and implementation of mobile applications, focusing on user interface, sensing, and system performance.",
+                "keywords": ["mobile development", "android", "ios", "responsive design", "mobile ui", "app development"],
+                "created_at": datetime.now(),
+                "updated_at": datetime.now()
+            },
+            {
+                "name": "Distributed Systems",
+                "code": "CS4224",
+                "description": "Key concepts in distributed systems including communication, coordination, consensus, replication, and fault tolerance.",
+                "keywords": ["distributed computing", "cloud computing", "consensus algorithms", "fault tolerance", "replication", "distributed databases"],
+                "created_at": datetime.now(),
+                "updated_at": datetime.now()
+            }
+            # Add more sample modules as needed
+        ]
+        
+        db.modules.insert_many(modules)
+        print(f"Created {len(modules)} sample modules")
