@@ -3,406 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{% block title %}Syllabuzz{% endblock %}</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    typography: {
-                        DEFAULT: {
-                            css: {
-                                maxWidth: '100%'
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <title>{% block title %}CS Articles Recommender{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .line-clamp-1 {
-            display: -webkit-box;
-            -webkit-line-clamp: 1;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .line-clamp-2 {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .line-clamp-3 {
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-    </style>
-    {% block styles %}{% endblock %}
-    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
 </head>
-<body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100" data-user-logged-in="{{ 'true' if g.user else 'false' }}" data-theme="{{ session.theme|default('system', true) }}">
-    <div class="flex min-h-screen">
-        <!-- Only show sidebar navigation if user is logged in -->
-        {% if session.user_id %}
-        <nav class="hidden md:flex flex-col w-72 bg-gradient-to-b from-blue-700 to-blue-900 text-white p-6">
-            <div class="flex items-center space-x-3 mb-8">
-                <i class="fas fa-book-open text-3xl text-yellow-300"></i>
-                <h2 class="text-2xl font-bold">Syllabuzz</h2>
-            </div>
-            
-            <div class="mb-8">
-                <div class="flex items-center space-x-3 mb-4">
-                    <div class="w-12 h-12 rounded-full bg-blue-400 flex items-center justify-center text-xl font-bold">
-                        {% if user and user.username %}
-                            {{ user.username[0] | upper }}
-                        {% else %}
-                            U
-                        {% endif %}
-                    </div>
-                    <div>
-                        <h3 class="font-medium">
-                            {% if user and user.username %}
-                                {{ user.username }}
-                            {% else %}
-                                User
-                            {% endif %}
-                        </h3>
-                    </div>
-                </div>
-            </div>
-            
-            <ul class="flex-1 space-y-1">
-                <li><a href="{{ url_for('dashboard') }}" class="flex items-center p-3 {% if request.path == url_for('dashboard') %}bg-white bg-opacity-20 rounded-lg font-medium{% else %}hover:bg-white hover:bg-opacity-10 rounded-lg transition duration-200{% endif %}"><i class="fas fa-columns w-8"></i> Dashboard</a></li>
-                <li><a href="{{ url_for('bookmarks') }}" class="flex items-center p-3 {% if request.path == url_for('bookmarks') %}bg-white bg-opacity-20 rounded-lg font-medium{% else %}hover:bg-white hover:bg-opacity-10 rounded-lg transition duration-200{% endif %}"><i class="fas fa-bookmark w-8"></i> Bookmarks</a></li>
-                <li><a href="{{ url_for('profile') }}" class="flex items-center p-3 {% if request.path == url_for('profile') %}bg-white bg-opacity-20 rounded-lg font-medium{% else %}hover:bg-white hover:bg-opacity-10 rounded-lg transition duration-200{% endif %}"><i class="fas fa-user w-8"></i> Profile</a></li>
-                <li><a href="{{ url_for('news_home') }}" class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition duration-200"><i class="fas fa-newspaper mr-3"></i><span>News</span></a></li>
-            </ul>
-            
-            <a href="{{ url_for('logout') }}" class="flex items-center p-3 hover:bg-white hover:bg-opacity-10 rounded-lg transition duration-200">
-                <i class="fas fa-sign-out-alt w-8"></i> Logout
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-newspaper me-2"></i>CS Articles Recommender
             </a>
-        </nav>
-        {% endif %}
-        
-        <main class="flex-1">
-            <!-- Header for logged in users -->
-            {% if session.user_id %}
-            <header class="bg-white dark:bg-gray-800 shadow-sm">
-                <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-                    <h1 class="text-xl font-bold">Syllabuzz</h1>
-                    
-                    <div class="flex items-center space-x-3">
-                        <!-- Theme Toggle Button -->
-                        <button class="theme-toggle p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300">
-                            <i class="fas fa-sun theme-sun hidden text-xl"></i>
-                            <i class="fas fa-moon theme-moon text-xl"></i>
-                        </button>
-                        
-                        <!-- Mobile menu button only shown for logged in users -->
-                        <button id="mobile-nav-toggle" class="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                    </div>
-                </div>
-            </header>
-            {% endif %}
-            
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="container mx-auto px-4 mt-4">
-                        {% for category, message in messages %}
-                            <div class="p-4 mb-4 rounded-md {% if category == 'success' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
-                                {{ message }}
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
-            
-            <!-- Content Container - Different styling based on login status -->
-            <div class="{% if not session.user_id %}flex items-center justify-center min-h-screen{% else %}container mx-auto p-4 md:p-6{% endif %}">
-                {% if not session.user_id %}
-                <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md w-full max-w-md">
-                {% endif %}
-                
-                <!-- Single content block -->
-                {% block content %}{% endblock %}
-                
-                {% if not session.user_id %}
-                </div>
-                {% endif %}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == url_for('index') %}active{% endif %}" href="{{ url_for('index') }}">Home</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="modulesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            CS Modules
+                        </a>
+                        <ul class="dropdown-menu" id="modulesDropdownMenu">
+                            <li><a class="dropdown-item" href="#" data-module-loading>Loading modules...</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Categories
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" data-category="technology">Technology</a></li>
+                            <li><a class="dropdown-item" href="#" data-category="science">Science</a></li>
+                            <li><a class="dropdown-item" href="#" data-category="education">Education</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="trendingLink">Trending</a>
+                    </li>
+                </ul>
+                <form class="d-flex" id="searchForm">
+                    <input class="form-control me-2" type="search" placeholder="Search articles..." aria-label="Search" id="searchInput">
+                    <button class="btn btn-light" type="submit"><i class="fas fa-search"></i></button>
+                </form>
             </div>
-        </main>
-    </div>
-    
-    <!-- Mobile navigation drawer for small screens -->
-    {% if session.user_id %}
-    <div id="mobile-nav" class="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 hidden">
-        <div class="h-full w-64 bg-gradient-to-b from-blue-700 to-blue-900 text-white p-6 flex flex-col">
-            <div class="flex items-center justify-between mb-8">
-                <div class="flex items-center space-x-3">
-                    <i class="fas fa-book-open text-2xl text-yellow-300"></i>
-                    <h2 class="text-xl font-bold">Syllabuzz</h2>
-                </div>
-                <button id="close-mobile-nav" class="p-2 hover:bg-white hover:bg-opacity-10 rounded-lg">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <!-- Replace the user section in mobile navigation with this safer version -->
-            <div class="mb-8">
-                <div class="flex items-center space-x-3 mb-4">
-                    <div class="w-10 h-10 rounded-full bg-blue-400 flex items-center justify-center text-lg font-bold">
-                        {% if user and user.username %}
-                            {{ user.username[0] | upper }}
-                        {% else %}
-                            User
-                        {% endif %}
-                    </div>
-                    <div>
-                        <h3 class="font-medium">
-                            {% if user and user.username %}
-                                {{ user.username }}
-                            {% else %}
-                                User
-                            {% endif %}
-                        </h3>
-                        
-                    </div>
-                </div>
-            </div>
-            
-            <ul class="flex-1 space-y-1">
-                <li><a href="{{ url_for('dashboard') }}" class="flex items-center p-3 {% if request.path == url_for('dashboard') %}bg-white bg-opacity-20 rounded-lg font-medium{% else %}hover:bg-white hover:bg-opacity-10 rounded-lg transition duration-200{% endif %}"><i class="fas fa-columns w-8"></i> Dashboard</a></li>
-                <li><a href="{{ url_for('bookmarks') }}" class="flex items-center p-3 {% if request.path == url_for('bookmarks') %}bg-white bg-opacity-20 rounded-lg font-medium{% else %}hover:bg-white hover:bg-opacity-10 rounded-lg transition duration-200{% endif %}"><i class="fas fa-bookmark w-8"></i> Bookmarks</a></li>
-                <li><a href="{{ url_for('profile') }}" class="flex items-center p-3 {% if request.path == url_for('profile') %}bg-white bg-opacity-20 rounded-lg font-medium{% else %}hover:bg-white hover:bg-opacity-10 rounded-lg transition duration-200{% endif %}"><i class="fas fa-user w-8"></i> Profile</a></li>
-                <!-- Theme toggle button -->
-                <li>
-                    <button class="theme-toggle w-full flex items-center p-3 hover:bg-white hover:bg-opacity-10 rounded-lg transition duration-200">
-                        <i class="fas fa-moon theme-moon w-8"></i>
-                        <i class="fas fa-sun theme-sun hidden w-8"></i>
-                        <span>Toggle Theme</span>
-                    </button>
-                </li>
-                <li><a href="{{ url_for('news_home') }}" class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition duration-200"><i class="fas fa-newspaper mr-3"></i><span>News</span></a></li>
-            </ul>
-            
-            <a href="{{ url_for('logout') }}" class="flex items-center p-3 hover:bg-white hover:bg-opacity-10 rounded-lg transition duration-200">
-                <i class="fas fa-sign-out-alt w-8"></i> Logout
-            </a>
         </div>
-    </div>
-    {% endif %}
+    </nav>
 
-    <script>
-        // Check for saved theme preference
-        if (localStorage.theme === 'dark' || 
-            (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
+    <!-- Main Content -->
+    <main class="container py-4">
+        {% block content %}{% endblock %}
+    </main>
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Dark mode toggle
-            const darkModeToggle = document.getElementById('dark-mode-toggle');
-            if (darkModeToggle) {
-                darkModeToggle.addEventListener('click', function() {
-                    document.documentElement.classList.toggle('dark');
-                    if (document.documentElement.classList.contains('dark')) {
-                        localStorage.theme = 'dark';
-                    } else {
-                        localStorage.theme = 'light';
-                    }
-                });
-            }
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>CS Articles Recommender</h5>
+                    <p>A personalized news recommendation system for Computer Science students and professionals.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url_for('index') }}" class="text-white">Home</a></li>
+                        <li><a href="#" class="text-white" id="footerTrendingLink">Trending</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Powered By</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="https://newsapi.org/" target="_blank" class="text-white">News API</a></li>
+                        <li><a href="https://www.sbert.net/" target="_blank" class="text-white">Sentence-BERT</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p>&copy;  CS Articles Recommender. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 
-            // Mobile navigation toggle
-            const mobileNavToggle = document.getElementById('mobile-nav-toggle');
-            const nav = document.querySelector('nav');
-            if (mobileNavToggle && nav) {
-                mobileNavToggle.addEventListener('click', function() {
-                    nav.classList.toggle('hidden');
-                    if (!nav.classList.contains('hidden')) {
-                        nav.classList.add('fixed', 'inset-0', 'z-40');
-                    } else {
-                        nav.classList.remove('fixed', 'inset-0', 'z-40');
-                    }
-                });
-            }
-
-            const mobileNav = document.getElementById('mobile-nav');
-            const closeMobileNav = document.getElementById('close-mobile-nav');
-            
-            if (mobileNavToggle && mobileNav && closeMobileNav) {
-                mobileNavToggle.addEventListener('click', function() {
-                    mobileNav.classList.remove('hidden');
-                });
-                
-                closeMobileNav.addEventListener('click', function() {
-                    mobileNav.classList.add('hidden');
-                });
-                
-                // Close when clicking outside
-                mobileNav.addEventListener('click', function(e) {
-                    if (e.target === mobileNav) {
-                        mobileNav.classList.add('hidden');
-                    }
-                });
-            }
-        });
-    </script><script>
-    // Helper function for making AJAX requests with CSRF token
-    function fetchWithCSRF(url, options = {}) {
-        // Get the CSRF token from the meta tag
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        
-        // Set up default headers with CSRF token
-        const headers = {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': csrfToken,
-            ...(options.headers || {})
-        };
-        
-        // Return the fetch promise
-        return fetch(url, {
-            ...options,
-            headers
-        });
-    }
-</script>
-
-    <!-- Add this to the scripts section of your base template -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Validate all article links to prevent empty ID requests
-    document.querySelectorAll('a[href^="/article/"]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            // Check if the URL has a proper article ID
-            const href = this.getAttribute('href');
-            if (href === '/article/' || href.endsWith('/article/undefined') || href.endsWith('/article/null')) {
-                e.preventDefault();
-                console.error('Invalid article link: Missing article ID');
-                
-                // Show a notification to user instead of redirecting
-                const notification = document.createElement('div');
-                notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50';
-                notification.textContent = 'Error: Invalid article link';
-                document.body.appendChild(notification);
-                
-                // Remove notification after 3 seconds
-                setTimeout(() => {
-                    notification.remove();
-                }, 3000);
-                
-                return false;
-            }
-        });
-    });
-});
-</script>
-
-    <!-- Add this to your base template's JavaScript section -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Validate all article links to prevent empty/undefined ID issues
-    document.querySelectorAll('a[href^="/article/"]').forEach(link => {
-        const href = link.getAttribute('href');
-        if (href === '/article/' || 
-            href === '/article/undefined' || 
-            href === '/article/null' || 
-            href.includes('/article/missing-id')) {
-            
-            // Replace broken links with a non-clickable span
-            const span = document.createElement('span');
-            span.className = link.className + ' cursor-not-allowed text-gray-400';
-            span.textContent = link.textContent || 'Article unavailable';
-            span.title = 'Article ID missing';
-            
-            // Replace the link with the span
-            link.parentNode.replaceChild(span, link);
-        }
-    });
-});
-</script>
-<!-- Add this to your base.html or articles.html template -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Init bookmark buttons
-        initBookmarkButtons();
-        
-        // Function to initialize bookmark buttons
-        function initBookmarkButtons() {
-            document.querySelectorAll('.bookmark-btn, #bookmark-toggle').forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const articleId = this.getAttribute('data-id');
-                    const button = this;
-                    
-                    console.log('Bookmarking article ID:', articleId);
-                    
-                    // Send request
-                    fetch('/api/bookmark/toggle', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ article_id: articleId })
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Request failed with status ' + response.status);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('Bookmark response:', data);
-                        
-                        // Update button based on response
-                        if (data.is_bookmarked) {
-                            button.innerHTML = '<i class="fas fa-bookmark text-blue-500"></i>';
-                            button.classList.add('bookmarked');
-                            // showNotification('Article bookmarked successfully');
-                        } else {
-                            button.innerHTML = '<i class="far fa-bookmark"></i>';
-                            button.classList.remove('bookmarked');
-                            // showNotification('Bookmark removed');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error toggling bookmark:', error);
-                        showNotification('Failed to update bookmark: ' + error.message, 'error');
-                    });
-                });
-            });
-        }
-        
-        // Function to show notifications
-        function showNotification(message, type = 'success') {
-            const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 p-4 rounded shadow-lg z-50 ${
-                type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
-            }`;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
-        }
-    });
-    </script>
-    
-    {% block scripts %}{% endblock %}
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -1,23 +1,264 @@
-from sentence_transformers import SentenceTransformer
+# Vector embedding generation
 import numpy as np
+import logging
+from datetime import datetime
+from sentence_transformers import SentenceTransformer
+from bson.objectid import ObjectId
+from utils.db_utils import articles_collection, modules_collection, relevance_collection
+from config import SBERT_MODEL_NAME, RELEVANCE_THRESHOLD
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class EmbeddingService:
-    def __init__(self, model_name='all-MiniLM-L6-v2'):
-        self.model = SentenceTransformer(model_name)
-        
+    def __init__(self, model_name=SBERT_MODEL_NAME):
+        """Initialize the embedding service with the specified model"""
+        try:
+            self.model = SentenceTransformer(model_name)
+            logger.info(f"Initialized embedding service with model: {model_name}")
+        except Exception as e:
+            logger.error(f"Error loading SBERT model: {str(e)}")
+            raise
+
     def generate_embedding(self, text):
-        """Generate embedding for a single text"""
-        return self.model.encode(text)
-        
-    def generate_embeddings(self, texts):
-        """Generate embeddings for multiple texts"""
-        return self.model.encode(texts)
-        
-    def get_module_embedding(self, module):
-        """Generate an embedding for a module based on its keywords and description"""
-        module_text = ' '.join(module['keywords']) + ' ' + module.get('description', '')
-        return self.model.encode(module_text)
-        
+        """Generate embedding vector for a given text"""
+        if not text or not isinstance(text, str):
+            return None
+            
+        try:
+            # Generate embedding vector
+            embedding = self.model.encode(text)
+            return embedding.tolist()  # Convert numpy array to list for MongoDB storage
+        except Exception as e:
+            logger.error(f"Error generating embedding: {str(e)}")
+            return None
+
+    def generate_module_embedding(self, module_id):
+        """Generate embedding vector for a module based on description and keywords"""
+        try:
+            # Get module details
+            module = modules_collection.find_one({"_id": ObjectId(module_id) if isinstance(module_id, str) else module_id})
+            if not module:
+                logger.error(f"Module not found: {module_id}")
+                return None
+                
+            # Combine description and keywords
+            text = module.get("description", "")
+            keywords = module.get("keywords", [])
+            
+            if keywords:
+                text += " " + " ".join(keywords)
+                
+            # Generate embedding
+            embedding = self.generate_embedding(text)
+            
+            # Update module with embedding
+            modules_collection.update_one(
+                {"_id": module["_id"]},
+                {"$set": {"vector_embedding": embedding, "updated_at": datetime.now()}}
+            )
+            
+            logger.info(f"Generated embedding for module: {module.get('name')}")
+            return embedding
+        except Exception as e:
+            logger.error(f"Error generating module embedding: {str(e)}")
+            return None
+
+    def generate_article_embedding(self, article_id):
+        """Generate embedding vector for an article based on title, description, and content"""
+        try:
+            # Get article details
+            article = articles_collection.find_one({"_id": ObjectId(article_id) if isinstance(article_id, str) else article_id})
+            if not article:
+                logger.error(f"Article not found: {article_id}")
+                return None
+                
+            # Combine title, description, and content
+            text_parts = []
+            
+            if article.get("title"):
+                text_parts.append(article["title"])
+                
+            if article.get("description"):
+                text_parts.append(article["description"])
+                
+            if article.get("content"):
+                # Limit content to first 1000 characters to avoid exceeding model limits
+                text_parts.append(article["content"][:1000])
+                
+            text = " ".join(text_parts)
+            
+            # Generate embedding
+            embedding = self.generate_embedding(text)
+            
+            # Update article with embedding
+            articles_collection.update_one(
+                {"_id": article["_id"]},
+                {"$set": {"vector_embedding": embedding, "updated_at": datetime.now()}}
+            )
+            
+            logger.info(f"Generated embedding for article: {article.get('title')}")
+            return embedding
+        except Exception as e:
+            logger.error(f"Error generating article embedding: {str(e)}")
+            return None
+
     def calculate_similarity(self, embedding1, embedding2):
         """Calculate cosine similarity between two embeddings"""
-        return np.dot(embedding1, embedding2) / (np.linalg.norm(embedding1) * np.linalg.norm(embedding2))
+        if not embedding1 or not embedding2:
+            return 0.0
+            
+        try:
+            # Convert to numpy arrays if they are lists
+            if isinstance(embedding1, list):
+                embedding1 = np.array(embedding1)
+            
+            if isinstance(embedding2, list):
+                embedding2 = np.array(embedding2)
+                
+            # Calculate cosine similarity
+            dot_product = np.dot(embedding1, embedding2)
+            norm1 = np.linalg.norm(embedding1)
+            norm2 = np.linalg.norm(embedding2)
+            
+            if norm1 == 0 or norm2 == 0:
+                return 0.0
+                
+            similarity = dot_product / (norm1 * norm2)
+            return float(similarity)
+        except Exception as e:
+            logger.error(f"Error calculating similarity: {str(e)}")
+            return 0.0
+
+    def update_module_article_relevance(self, module_id, article_id):
+        """Calculate and update relevance between a module and an article"""
+        try:
+            # Get module and article
+            module = modules_collection.find_one({"_id": ObjectId(module_id) if isinstance(module_id, str) else module_id})
+            article = articles_collection.find_one({"_id": ObjectId(article_id) if isinstance(article_id, str) else article_id})
+            
+            if not module or not article:
+                logger.error(f"Module or article not found: {module_id}, {article_id}")
+                return None
+                
+            # Get embeddings
+            module_embedding = module.get("vector_embedding")
+            article_embedding = article.get("vector_embedding")
+            
+            # Generate embeddings if not available
+            if not module_embedding:
+                module_embedding = self.generate_module_embedding(module_id)
+                
+            if not article_embedding:
+                article_embedding = self.generate_article_embedding(article_id)
+                
+            if not module_embedding or not article_embedding:
+                logger.warning(f"Could not generate embeddings for module-article: {module_id}, {article_id}")
+                return None
+                
+            # Calculate similarity
+            relevance_score = self.calculate_similarity(module_embedding, article_embedding)
+            
+            # Update or insert relevance score
+            relevance_collection.update_one(
+                {"module_id": module["_id"], "article_id": article["_id"]},
+                {
+                    "$set": {
+                        "relevance_score": relevance_score,
+                        "updated_at": datetime.now()
+                    },
+                    "$setOnInsert": {
+                        "created_at": datetime.now()
+                    }
+                },
+                upsert=True
+            )
+            
+            logger.info(f"Updated relevance for module-article: {module.get('name')}, {article.get('title')}, score: {relevance_score:.4f}")
+            return relevance_score
+        except Exception as e:
+            logger.error(f"Error updating module-article relevance: {str(e)}")
+            return None
+
+    def update_all_module_embeddings(self):
+        """Update embeddings for all modules"""
+        try:
+            modules = modules_collection.find({})
+            for module in modules:
+                self.generate_module_embedding(module["_id"])
+            logger.info("Updated all module embeddings")
+        except Exception as e:
+            logger.error(f"Error updating all module embeddings: {str(e)}")
+
+    def update_recent_article_embeddings(self, days=1):
+        """Update embeddings for articles from the last X days"""
+        try:
+            # Find recent articles
+            from datetime import datetime, timedelta
+            cutoff_date = datetime.now() - timedelta(days=days)
+            
+            query = {
+                "$or": [
+                    {"vector_embedding": None},
+                    {"updated_at": {"$lt": cutoff_date}}
+                ]
+            }
+            
+            articles = articles_collection.find(query).limit(100)  # Process in batches
+            
+            count = 0
+            for article in articles:
+                self.generate_article_embedding(article["_id"])
+                count += 1
+                
+            logger.info(f"Updated embeddings for {count} recent articles")
+        except Exception as e:
+            logger.error(f"Error updating recent article embeddings: {str(e)}")
+
+    def update_relevance_scores(self):
+        """Update relevance scores for all module-article pairs"""
+        try:
+            # Get modules and articles with embeddings
+            modules = list(modules_collection.find({"vector_embedding": {"$ne": None}}))
+            articles = list(articles_collection.find({"vector_embedding": {"$ne": None}}).sort("published_at", -1).limit(100))
+            
+            count = 0
+            for module in modules:
+                for article in articles:
+                    self.update_module_article_relevance(module["_id"], article["_id"])
+                    count += 1
+                    
+            logger.info(f"Updated {count} module-article relevance scores")
+        except Exception as e:
+            logger.error(f"Error updating relevance scores: {str(e)}")
+
+    def get_module_recommendations(self, module_id, limit=10):
+        """Get article recommendations for a specific module"""
+        try:
+            # Validate module exists
+            module = modules_collection.find_one({"_id": ObjectId(module_id) if isinstance(module_id, str) else module_id})
+            if not module:
+                logger.error(f"Module not found: {module_id}")
+                return []
+                
+            # Get articles with high relevance to this module
+            relevance_docs = relevance_collection.find({
+                "module_id": module["_id"],
+                "relevance_score": {"$gte": RELEVANCE_THRESHOLD}
+            }).sort("relevance_score", -1).limit(limit)
+            
+            # Get article details
+            recommendations = []
+            for rel in relevance_docs:
+                article = articles_collection.find_one({"_id": rel["article_id"]})
+                if article:
+                    # Add relevance score to article
+                    article["relevance_score"] = rel["relevance_score"]
+                    recommendations.append(article)
+                    
+            logger.info(f"Found {len(recommendations)} recommendations for module: {module.get('name')}")
+            return recommendations
+        except Exception as e:
+            logger.error(f"Error getting module recommendations: {str(e)}")
+            return []

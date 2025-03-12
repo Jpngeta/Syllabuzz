@@ -1,90 +1,104 @@
-# db_utils.py
-from pymongo import MongoClient
-import os
-from dotenv import load_dotenv
+# Database utilities
+import pymongo
+from datetime import datetime
+from config import MONGO_URI, MONGO_DB_NAME
 
-# Load environment variables
-load_dotenv()
+# Create MongoDB connection
+client = pymongo.MongoClient(MONGO_URI)
+db = client[MONGO_DB_NAME]
 
-# Connect to MongoDB 
-# (You can import your existing db instance from db.py if you prefer)
-client = MongoClient(os.getenv('MONGO_URI', 'mongodb://localhost:27017/syllabuzz'))
-db = client.get_database()
+# Create collections
+articles_collection = db.articles
+modules_collection = db.modules
+relevance_collection = db.module_article_relevance
+users_collection = db.users
+bookmarks_collection = db.bookmarks
+interactions_collection = db.interactions
 
-def setup_recommendation_indexes():
-    """Set up indexes for recommendation functionality"""
-    # Text search index for articles (if not already created)
-    if 'text_search' not in [idx.get('name') for idx in list(db.articles.list_indexes())]:
-        db.articles.create_index([
-            ('title', 'text'), 
-            ('content', 'text'),
-            ('description', 'text')
-        ], 
-        name='text_search',
-        weights={
-            'title': 10,
-            'description': 5, 
-            'content': 1
-        })
-    
-    # Module keyword index
-    db.modules.create_index('keywords')
-    
-    # User-module relationship index
-    db.users.create_index('modules')
-    
-    # Interaction index for recommendation personalization
-    db.interactions.create_index([('user_id', 1), ('created_at', -1)])
-    db.interactions.create_index([('user_id', 1), ('article_id', 1)])
-    db.interactions.create_index([('user_id', 1), ('module_id', 1)])
-    
-    # Set up vector index if using MongoDB Atlas
-    # (Only needed if you're using MongoDB Atlas with Vector Search capability)
-    try:
-        db.command({
-            "createIndexes": "articles",
-            "indexes": [{
-                "key": {"vector_embedding": "hnsw"},
-                "name": "vector_index",
-                "params": {
-                    "dimensions": 384,  # Dimensions for Sentence-BERT embeddings
-                    "metric": "cosine"
-                }
-            }]
-        })
-        print("Vector search index created successfully")
-    except Exception as e:
-        print(f"Note: Could not create vector index: {str(e)}")
-        print("This is normal if you're not using MongoDB Atlas with vector search capability")
-        print("The application will fall back to alternative similarity methods")
-
-def get_module_articles(module_id, limit=10):
-    """Get articles related to a specific module"""
-    # Get the module to extract keywords
-    module = db.modules.find_one({'_id': module_id})
-    if not module or 'keywords' not in module:
-        return []
-    
-    # Use text search with module keywords
-    keyword_query = ' '.join(module['keywords'])
-    articles = list(db.articles.find(
-        {'$text': {'$search': keyword_query}},
-        {'score': {'$meta': 'textScore'}}
-    ).sort([('score', {'$meta': 'textScore'})]).limit(limit))
-    
-    return articles
-
-def record_article_interaction(user_id, article_id, interaction_type, module_id=None, metadata=None):
-    """Record user interaction with an article"""
-    interaction = {
-        'user_id': user_id,
-        'article_id': article_id,
-        'interaction_type': interaction_type,
-        'created_at': datetime.now(),
-        'metadata': metadata or {}
-    }
-    
-    if module_id:
-        interaction['module_id'] = module_id
+def create_sample_cs_modules():
+    """Create some sample CS modules if none exist"""
+    if modules_collection.count_documents({}) == 0:
+        print("Creating sample CS modules...")
         
-    return db.interactions.insert_one(interaction).inserted_id
+        modules = [
+            {
+                "name": "Data Structures and Algorithms",
+                "code": "COMP 210",
+                "description": "A study of fundamental data structures and algorithms including lists, stacks, queues, trees, graphs, sorting and searching.",
+                "keywords": ["algorithms", "data structures", "sorting", "searching", "complexity analysis", "trees", "graphs"],
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
+                "vector_embedding": None  # Will be populated by embedding service
+            },
+            {
+                "name": "Mobile Computing",
+                "code": "COMP 340",
+                "description": "Design and implementation of mobile applications, focusing on user interface, sensing, and system performance.",
+                "keywords": ["mobile development", "android", "ios", "responsive design", "mobile ui", "app development"],
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
+                "vector_embedding": None
+            },
+            {
+                "name": "Distributed Systems",
+                "code": "COMP 325",
+                "description": "Key concepts in distributed systems including communication, coordination, consensus, replication, and fault tolerance.",
+                "keywords": ["distributed computing", "cloud computing", "consensus algorithms", "fault tolerance", "replication", "distributed databases"],
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
+                "vector_embedding": None
+            },
+            {
+                "name": "Machine Learning",
+                "code": "COMP 410",
+                "description": "Fundamentals of machine learning including supervised and unsupervised learning, classification, regression, clustering, and neural networks.",
+                "keywords": ["machine learning", "neural networks", "deep learning", "AI", "data mining", "classification", "clustering"],
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
+                "vector_embedding": None
+            },
+            {
+                "name": "Computer Networks",
+                "code": "COMP 315",
+                "description": "Concepts and technologies of computer networks, including network protocols, Internet architecture, socket programming, and network security.",
+                "keywords": ["networking", "TCP/IP", "protocols", "Internet", "socket programming", "routing", "network security"],
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
+                "vector_embedding": None
+            }
+        ]
+        
+        modules_collection.insert_many(modules)
+        print(f"Created {len(modules)} sample modules")
+
+def create_indexes():
+    """Create necessary database indexes"""
+    # Article indexes
+    articles_collection.create_index([("url", pymongo.ASCENDING)], unique=True)
+    articles_collection.create_index([("title", pymongo.TEXT), ("content", pymongo.TEXT), ("description", pymongo.TEXT)])
+    articles_collection.create_index([("published_at", pymongo.DESCENDING)])
+    articles_collection.create_index([("categories", pymongo.ASCENDING)])
+    
+    # Module indexes
+    modules_collection.create_index([("code", pymongo.ASCENDING)], unique=True)
+    
+    # Relevance indexes
+    relevance_collection.create_index([
+        ("module_id", pymongo.ASCENDING), 
+        ("article_id", pymongo.ASCENDING)
+    ], unique=True)
+    relevance_collection.create_index([("relevance_score", pymongo.DESCENDING)])
+    
+    # Interaction indexes
+    interactions_collection.create_index([
+        ("user_id", pymongo.ASCENDING),
+        ("article_id", pymongo.ASCENDING),
+        ("module_id", pymongo.ASCENDING)
+    ])
+    
+    print("Created database indexes")
+
+def initialize_database():
+    """Initialize the database with required data"""
+    create_indexes()
+    create_sample_cs_modules()
