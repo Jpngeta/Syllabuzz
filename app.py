@@ -12,6 +12,7 @@ from services.article_service import ArticleService
 from services.embedding_service import EmbeddingService
 from services.recommendation_service import RecommendationService
 from services.scheduler_service import SchedulerService
+from services.arXiv_service import ArxivService
 
 # Import utils
 from utils.db_utils import initialize_database, modules_collection, articles_collection, relevance_collection, users_collection
@@ -33,7 +34,9 @@ news_service = NewsAPIClientService(api_key=NEWS_API_KEY)
 article_service = ArticleService(news_api_key=NEWS_API_KEY)
 embedding_service = EmbeddingService(model_name=SBERT_MODEL_NAME)
 recommendation_service = RecommendationService(embedding_service=embedding_service)
-scheduler_service = SchedulerService(article_service=article_service, embedding_service=embedding_service)
+arxiv_service = ArxivService()
+scheduler_service = SchedulerService(article_service=article_service, embedding_service=embedding_service, arxiv_service=arxiv_service)
+
 
 # Store scheduler thread reference
 scheduler_thread = None
@@ -153,13 +156,13 @@ def get_module_recommendations(module_id):
 
 @app.route('/api/articles')
 def get_articles():
-    """Get articles with optional category filter"""
+    """Get articles and papers with optional category filter"""
     try:
         category = request.args.get('category')
         limit = int(request.args.get('limit', 20))
         skip = int(request.args.get('skip', 0))
         
-        articles = article_service.get_articles(category, limit=limit, skip=skip)
+        articles = article_service.get_combined_articles(category, limit=limit, skip=skip)
         return jsonify({"articles": articles})
     except Exception as e:
         logger.error(f"Error getting articles: {str(e)}")
@@ -180,7 +183,7 @@ def get_article(article_id):
 
 @app.route('/api/search')
 def search_articles():
-    """Search articles by query"""
+    """Search articles and papers by query"""
     try:
         query = request.args.get('q')
         limit = int(request.args.get('limit', 20))
@@ -189,7 +192,7 @@ def search_articles():
         if not query:
             return jsonify({"error": "Query parameter 'q' is required"}), 400
             
-        articles = article_service.search_articles(query, limit=limit, skip=skip)
+        articles = article_service.search_combined(query, limit=limit, skip=skip)
         return jsonify({"articles": articles})
     except Exception as e:
         logger.error(f"Error searching articles: {str(e)}")
@@ -376,6 +379,20 @@ def fetch_articles():
         return jsonify({"message": f"Fetched and stored {result} articles"})
     except Exception as e:
         logger.error(f"Error fetching articles: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/admin/fetch-papers', methods=['POST'])
+def fetch_papers():
+    """Admin endpoint to trigger paper fetching"""
+    try:
+        data = request.json
+        query = data.get('query', 'cs.AI')
+        count = int(data.get('count', 20))
+        
+        result = arxiv_service.fetch_and_store_papers(search_query=query, max_results=count)
+        return jsonify({"message": f"Fetched and stored {result} papers"})
+    except Exception as e:
+        logger.error(f"Error fetching papers: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/admin/reset-database', methods=['POST'])

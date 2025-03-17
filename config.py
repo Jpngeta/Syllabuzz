@@ -19,7 +19,7 @@ SBERT_MODEL_NAME = os.environ.get('SBERT_MODEL_NAME', 'all-MiniLM-L6-v2')
 SCHEDULER_INTERVAL_MINUTES = int(os.environ.get('SCHEDULER_INTERVAL_MINUTES', 5))
 
 # Relevance threshold for recommendations
-RELEVANCE_THRESHOLD = float(os.environ.get('RELEVANCE_THRESHOLD', 0.01))
+RELEVANCE_THRESHOLD = float(os.environ.get('RELEVANCE_THRESHOLD', 0.2))
 
 # Flask app configuration
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
@@ -27,3 +27,14 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'dev_key_change_in_production')
 
 # Default categories for articles
 ARTICLE_CATEGORIES = ['technology', 'science', 'education']
+
+# Targeted content fetching settings
+# CS categories for arXiv papers
+ARXIV_CS_CATEGORIES = ["cs.AI", "cs.CL", "cs.LG", "cs.CV", "cs.DS", "cs.SE", "cs.DB", "cs.CR", "cs.NE"]
+
+# Number of articles/papers to fetch per module
+MODULE_CONTENT_FETCH_COUNT = 10
+
+# Keywords to add to general CS content fetching
+GENERAL_CS_KEYWORDS = ["programming", "algorithm", "data structure", "artificial intelligence",
+                      "machine learning", "computer science", "software engineering"]

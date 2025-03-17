@@ -185,17 +185,65 @@ class ArticleService:
             }
             
             # Perform search
-            articles = list(articles_collection.find(search_query)
+            results = list(articles_collection.find(search_query)
                            .sort("published_at", -1)
                            .skip(skip)
                            .limit(limit))
                            
-            # Convert ObjectId to string
-            for article in articles:
-                article["_id"] = str(article["_id"])
-                
-            logger.info(f"Found {len(articles)} articles matching query: {query}")
-            return articles
+            # Convert ObjectId to string and add type
+            for item in results:
+                item["_id"] = str(item["_id"])
+                # Add a type field to distinguish between news and academic
+                if item.get("source_name") == "arXiv":
+                    item["type"] = "academic"
+                else:
+                    item["type"] = "news"
+                    
+            logger.info(f"Found {len(results)} combined items matching query: {query}")
+            return results
         except Exception as e:
-            logger.error(f"Error searching articles: {str(e)}")
-            return []
+            logger.error(f"Error searching combined content: {str(e)}")
+            return []                 
+        
+    def get_combined_articles(self, category=None, limit=20, skip=0):
+
+    #Get both news articles and academic papers, optionally filtered by category
+    # This method combines news articles and arXiv papers in a single list,
+    # sorted by published date
+
+        try:
+            # Build query
+            query = {}
+            
+            # Add category filter if provided
+            if category:
+                # Handle special case "academic" to show only papers
+                if category == "academic":
+                    query["source_name"] = "arXiv"
+                # For regular categories, try to match with either news categories or arXiv categories
+                else:
+                    query["$or"] = [
+                        {"categories": category},  # Regular news article category
+                        {"categories": {"$regex": category, "$options": "i"}}  # arXiv category (case insensitive)
+                    ]
+                    
+            # Get articles from both sources
+            combined_articles = list(articles_collection.find(query)
+                            .sort("published_at", -1)
+                            .skip(skip)
+                            .limit(limit))
+                            
+            # Convert ObjectId to string for JSON serialization
+            for article in combined_articles:
+                article["_id"] = str(article["_id"])
+                # Add a type field to distinguish between news and academic
+                if article.get("source_name") == "arXiv":
+                    article["type"] = "academic"
+                else:
+                    article["type"] = "news"
+                    
+            logger.info(f"Retrieved {len(combined_articles)} combined articles/papers from database for category: {category}")
+            return combined_articles
+        except Exception as e:
+            logger.error(f"Error getting combined articles: {str(e)}")
+            return []     

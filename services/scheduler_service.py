@@ -11,10 +11,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class SchedulerService:
-    def __init__(self, article_service, embedding_service):
+    def __init__(self, article_service, embedding_service, arxiv_service=None):
         """Initialize the scheduler service"""
         self.article_service = article_service
         self.embedding_service = embedding_service
+        self.arxiv_service = arxiv_service 
         self.is_running = False
         logger.info("Initialized scheduler service")
 
@@ -63,17 +64,29 @@ class SchedulerService:
             self.is_running = False
 
     def fetch_articles(self):
-        """Fetch new articles from all categories"""
+        """Fetch new articles from all categories and arXiv"""
         try:
             logger.info("Running scheduled task: fetch_articles")
             
-            # Fetch articles for each category
+            # Fetch news articles for each category
             for category in ARTICLE_CATEGORIES:
                 try:
                     logger.info(f"Fetching articles for category: {category}")
                     self.article_service.fetch_and_store_articles(category=category, count=20)
                 except Exception as e:
                     logger.error(f"Error fetching articles for category {category}: {str(e)}")
+            
+            # Fetch arXiv papers if service is available
+            if self.arxiv_service:
+                try:
+                    # CS categories to fetch
+                    cs_categories = ["cs.AI", "cs.CL", "cs.LG", "cs.CV", "SE"]
+                    
+                    for category in cs_categories:
+                        logger.info(f"Fetching arXiv papers for category: {category}")
+                        self.arxiv_service.fetch_and_store_papers(search_query=category, max_results=10)
+                except Exception as e:
+                    logger.error(f"Error fetching arXiv papers: {str(e)}")
                     
             logger.info(f"Completed fetching articles at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
             return True
@@ -82,7 +95,7 @@ class SchedulerService:
             return False
 
     def update_article_embeddings(self):
-        """Update embeddings for recently added articles"""
+        """Update embeddings for recently added articles and papers"""
         try:
             logger.info("Running scheduled task: update_article_embeddings")
             self.embedding_service.update_recent_article_embeddings(days=1)
@@ -104,7 +117,7 @@ class SchedulerService:
             return False
 
     def update_relevance_scores(self):
-        """Update relevance scores between modules and articles"""
+        """Update relevance scores between modules and articles/papers"""
         try:
             logger.info("Running scheduled task: update_relevance_scores")
             self.embedding_service.update_relevance_scores()
