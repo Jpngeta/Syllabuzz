@@ -305,4 +305,15 @@
                     });
                     
                     // Update modal title
-                    document.getElementById('article
+                                    document.getElementById('articleDetailModalLabel').textContent = article.title;
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error fetching article details:', error);
+                                modalContent.innerHTML = `
+                                    <div class="alert alert-danger">
+                                        Failed to load article details. Please try again later.
+                                    </div>
+                                `;
+                            });
+                    }

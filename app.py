@@ -17,8 +17,12 @@ from services.arXiv_service import ArxivService
 # Import utils
 from utils.db_utils import initialize_database, modules_collection, articles_collection, relevance_collection, users_collection
 
+# Import blueprints
+from routes.auth_routes import auth
+from routes.auth_api_routes import auth_api
+
 # Import configuration
-from config import NEWS_API_KEY, DEBUG, SECRET_KEY, SBERT_MODEL_NAME
+from config import NEWS_API_KEY, DEBUG, SECRET_KEY, SBERT_MODEL_NAME, SESSION_EXPIRY_DAYS
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -75,6 +79,13 @@ def setup():
         logger.info("Application setup complete")
     except Exception as e:
         logger.error(f"Error during setup: {str(e)}")
+
+# Register blueprints
+app.register_blueprint(auth)
+app.register_blueprint(auth_api)
+
+# Pass recommendation service to auth_api blueprint
+auth_api.recommendation_service = recommendation_service
 
 # Web Routes
 @app.route('/')
@@ -394,6 +405,104 @@ def fetch_papers():
     except Exception as e:
         logger.error(f"Error fetching papers: {str(e)}")
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/admin/fetch-targeted-content', methods=['POST'])
+def fetch_targeted_content():
+    """Admin endpoint to trigger targeted content fetching for all modules"""
+    try:
+        result = scheduler_service.fetch_targeted_content_for_modules()
+        return jsonify({"message": "Targeted content fetching completed", "success": result})
+    except Exception as e:
+        logger.error(f"Error fetching targeted content: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/admin/fetch-module-content/<module_id>', methods=['POST'])
+def fetch_module_content(module_id):
+    """Admin endpoint to trigger content fetching for a specific module"""
+    try:
+        # Get module details
+        module = modules_collection.find_one({"_id": ObjectId(module_id)})
+        if not module:
+            return jsonify({"error": "Module not found"}), 404
+            
+        # Fetch news articles
+        article_count = article_service.fetch_module_specific_articles(module_id, count=20)
+        
+        # Fetch arXiv papers
+        paper_count = arxiv_service.fetch_module_specific_papers(module_id, max_results=20)
+        
+        # Update embeddings for the new content
+        if article_count > 0 or paper_count > 0:
+            embedding_service.update_recent_article_embeddings(days=1)
+            embedding_service.update_relevance_scores()
+        
+        return jsonify({
+            "message": f"Fetched {article_count} articles and {paper_count} papers for module",
+            "module_name": module.get("name", "Unknown")
+        })
+    except Exception as e:
+        logger.error(f"Error fetching module content: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/admin/fetch-keyword-content', methods=['POST'])
+def fetch_keyword_content():
+    """Admin endpoint to fetch content for specific keywords"""
+    try:
+        data = request.json
+        
+        if not data or not data.get('keywords'):
+            return jsonify({"error": "Missing required field 'keywords'"}), 400
+            
+        keywords = data.get('keywords')
+        count = int(data.get('count', 20))
+        
+        # Fetch news articles
+        article_count = article_service.fetch_targeted_articles(keywords, count=count)
+        
+        # Fetch arXiv papers
+        paper_count = arxiv_service.fetch_targeted_papers(keywords, max_results=count)
+        
+        # Update embeddings for the new content
+        if article_count > 0 or paper_count > 0:
+            embedding_service.update_recent_article_embeddings(days=1)
+            embedding_service.update_relevance_scores()
+        
+        return jsonify({
+            "message": f"Fetched {article_count} articles and {paper_count} papers for keywords: {keywords}"
+        })
+    except Exception as e:
+        logger.error(f"Error fetching keyword content: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+# @app.route('/api/admin/relevance-threshold', methods=['POST'])
+# def update_relevance_threshold():
+#     """Admin endpoint to adjust the relevance threshold"""
+#     try:
+#         data = request.json
+        
+#         if not data or not data.get('threshold'):
+#             return jsonify({"error": "Missing required field 'threshold'"}), 400
+            
+#         # Get current threshold
+#         from config import RELEVANCE_THRESHOLD
+#         current_threshold = RELEVANCE_THRESHOLD
+        
+#         # Update threshold in config (this is temporary, restarts will reset it)
+#         import sys
+#         module = sys.modules['config']
+#         setattr(module, 'RELEVANCE_THRESHOLD', float(data.get('threshold')))
+        
+#         # Recalculate relevance with new threshold
+#         if data.get('recalculate', False):
+#             embedding_service.update_relevance_scores()
+        
+#         return jsonify({
+#             "message": f"Updated relevance threshold from {current_threshold} to {data.get('threshold')}",
+#             "recalculated": data.get('recalculate', False)
+#         })
+#     except Exception as e:
+#         logger.error(f"Error updating relevance threshold: {str(e)}")
+#         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/admin/reset-database', methods=['POST'])
 def reset_database():

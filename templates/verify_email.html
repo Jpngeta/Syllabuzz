@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Your Email{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card">
+            <div class="card-header bg-primary text-white text-center">
+                <h4 class="mb-0"><i class="fas fa-envelope-open-text me-2"></i>Email Verification</h4>
+            </div>
+            <div class="card-body text-center">
+                {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+                <p class="mt-3">Please check your verification link or request a new one.</p>
+                <a href="{{ url_for('auth.resend_verification') }}" class="btn btn-outline-primary mt-2">Resend Verification Email</a>
+                {% elif expired %}
+                <div class="alert alert-warning">
+                    <p>Your verification link has expired or is invalid.</p>
+                </div>
+                <p class="mt-3">Please request a new verification email:</p>
+                <a href="{{ url_for('auth.resend_verification') }}" class="btn btn-primary mt-2">Request New Verification</a>
+                {% elif success %}
+                <div class="alert alert-success">
+                    <h5 class="mb-3"><i class="fas fa-check-circle me-2"></i>Email Verified!</h5>
+                    <p>{{ success }}</p>
+                </div>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary mt-3">Log In</a>
+                {% else %}
+                <div class="alert alert-info">
+                    <p>We are verifying your email address...</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
