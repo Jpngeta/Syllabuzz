@@ -1,4 +1,4 @@
-# Vector embedding generation
+# Updated embedding_service.py with improved historical article processing
 import numpy as np
 import logging
 from datetime import datetime
@@ -191,41 +191,75 @@ class EmbeddingService:
         except Exception as e:
             logger.error(f"Error updating all module embeddings: {str(e)}")
 
-    def update_recent_article_embeddings(self, days=1):
-        """Update embeddings for articles from the last X days"""
+    def update_recent_article_embeddings(self, days=7):
+        """Update embeddings for articles from the last X days and articles without embeddings"""
         try:
-            # Find recent articles
+            # Find articles that need embeddings: either recent or missing embeddings
             from datetime import datetime, timedelta
             cutoff_date = datetime.now() - timedelta(days=days)
             
             query = {
                 "$or": [
-                    {"vector_embedding": None},
-                    {"updated_at": {"$lt": cutoff_date}}
+                    {"vector_embedding": None},  # Articles missing embeddings
+                    {"updated_at": {"$lt": cutoff_date}}  # Articles with old embeddings
                 ]
             }
             
-            articles = articles_collection.find(query).limit(100)  # Process in batches
+            # Increase limit from 100 to 500 to process more at once
+            articles = articles_collection.find(query).limit(500)
             
             count = 0
             for article in articles:
                 self.generate_article_embedding(article["_id"])
                 count += 1
                 
-            logger.info(f"Updated embeddings for {count} recent articles")
+            logger.info(f"Updated embeddings for {count} articles")
         except Exception as e:
-            logger.error(f"Error updating recent article embeddings: {str(e)}")
+            logger.error(f"Error updating article embeddings: {str(e)}")
 
     def update_relevance_scores(self):
-        """Update relevance scores for all module-article pairs"""
+        """Update relevance scores for module-article pairs with improved historical coverage"""
         try:
-            # Get modules and articles with embeddings
+            # Get all modules with embeddings
             modules = list(modules_collection.find({"vector_embedding": {"$ne": None}}))
-            articles = list(articles_collection.find({"vector_embedding": {"$ne": None}}).sort("published_at", -1).limit(100))
+            
+            # Increase from 100 to 500 articles, and include any that don't have relevance scores yet
+            # Sort oldest first to ensure historical articles get processed
+            recent_articles_pipeline = [
+                {"$match": {"vector_embedding": {"$ne": None}}},
+                {"$sort": {"published_at": 1}},  # Process oldest first 
+                {"$limit": 250}
+            ]
+            
+            recent_articles = list(articles_collection.aggregate(recent_articles_pipeline))
+            
+            # Also get articles that have no relevance scores at all
+            missing_relevance_pipeline = [
+                {"$match": {"vector_embedding": {"$ne": None}}},
+                {"$lookup": {
+                    "from": "module_article_relevance",
+                    "localField": "_id",
+                    "foreignField": "article_id",
+                    "as": "relevance"
+                }},
+                {"$match": {"relevance": {"$size": 0}}},
+                {"$limit": 250}
+            ]
+            
+            missing_relevance_articles = list(articles_collection.aggregate(missing_relevance_pipeline))
+            
+            # Combine both sets of articles, removing duplicates
+            processed_ids = set()
+            combined_articles = []
+            
+            for article in recent_articles + missing_relevance_articles:
+                if str(article["_id"]) not in processed_ids:
+                    combined_articles.append(article)
+                    processed_ids.add(str(article["_id"]))
             
             count = 0
             for module in modules:
-                for article in articles:
+                for article in combined_articles:
                     self.update_module_article_relevance(module["_id"], article["_id"])
                     count += 1
                     
@@ -242,11 +276,11 @@ class EmbeddingService:
                 logger.error(f"Module not found: {module_id}")
                 return []
                 
-            # Get articles with high relevance to this module
+            # Get articles with high relevance to this module, increasing limit to get more quality content
             relevance_docs = relevance_collection.find({
                 "module_id": module["_id"],
                 "relevance_score": {"$gte": RELEVANCE_THRESHOLD}
-            }).sort("relevance_score", -1).limit(limit)
+            }).sort("relevance_score", -1).limit(limit * 2)  # Get more for filtering
             
             # Get article details
             recommendations = []
@@ -256,9 +290,12 @@ class EmbeddingService:
                     # Add relevance score to article
                     article["relevance_score"] = rel["relevance_score"]
                     recommendations.append(article)
-                    
-            logger.info(f"Found {len(recommendations)} recommendations for module: {module.get('name')}")
-            return recommendations
+            
+            # Sort by relevance score and take top results
+            recommendations.sort(key=lambda x: x["relevance_score"], reverse=True)
+            
+            logger.info(f"Found {len(recommendations[:limit])} recommendations for module: {module.get('name')}")
+            return recommendations[:limit]
         except Exception as e:
             logger.error(f"Error getting module recommendations: {str(e)}")
             return []

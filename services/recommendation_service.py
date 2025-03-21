@@ -16,38 +16,44 @@ class RecommendationService:
         logger.info("Initialized recommendation service")
 
     def get_module_recommendations(self, module_id, limit=10):
-        """Get article recommendations for a specific module"""
+    #Get combined article and paper recommendations for a specific module
         try:
             # Ensure module_id is ObjectId
             if isinstance(module_id, str):
                 module_id = ObjectId(module_id)
-                
+                    
             # Get module details
             module = modules_collection.find_one({"_id": module_id})
             if not module:
                 logger.error(f"Module not found: {module_id}")
                 return []
-                
-            # Get articles with high relevance scores for this module
+                    
+            # Get articles/papers with high relevance scores for this module
             relevance_docs = relevance_collection.find({
                 "module_id": module_id,
                 "relevance_score": {"$gte": RELEVANCE_THRESHOLD}
-            }).sort("relevance_score", -1).limit(limit)
-
-            print(relevance_docs)
-            
-            # Retrieve articles with their relevance scores
+            }).sort("relevance_score", -1).limit(limit * 2)  # Get more to ensure mix of types
+                
+            # Retrieve articles/papers with their relevance scores
             recommendations = []
             for rel in relevance_docs:
                 article = articles_collection.find_one({"_id": rel["article_id"]})
                 if article:
                     # Add relevance score to article
                     article["relevance_score"] = rel["relevance_score"]
+                    # Add type field
+                    if article.get("source_name") == "arXiv":
+                        article["type"] = "academic"
+                    else:
+                        article["type"] = "news"
                     # Convert ObjectId to string for JSON serialization
                     article["_id"] = str(article["_id"])
                     recommendations.append(article)
-                    
-            logger.info(f"Found {len(recommendations)} recommendations for module: {module.get('name')}")
+            
+            # Sort by relevance score and take top results           
+            recommendations = sorted(recommendations, key=lambda x: x["relevance_score"], reverse=True)[:limit]
+            
+            logger.info(f"Found {len(recommendations)} combined recommendations for module: {module.get('name')}")
             return recommendations
         except Exception as e:
             logger.error(f"Error getting module recommendations: {str(e)}")
@@ -63,15 +69,15 @@ class RecommendationService:
             if not user or not user.get("modules"):
                 logger.error(f"User not found or has no enrolled modules: {user_id}")
                 return []
-                
+                    
             # Get recommendations for each module the user is enrolled in
             all_recommendations = []
             for module_id in user.get("modules", []):
                 module_recs = self.get_module_recommendations(module_id, limit=10)
                 for rec in module_recs:
-                    rec["module_id"] = module_id  # Mark which module this recommendation is for
+                    rec["module_id"] = str(module_id)  # Mark which module this recommendation is for
                     all_recommendations.append(rec)
-                    
+                        
             # Deduplicate recommendations (an article may be relevant to multiple modules)
             seen_articles = set()
             unique_recommendations = []
@@ -80,7 +86,7 @@ class RecommendationService:
                 if article["_id"] not in seen_articles:
                     seen_articles.add(article["_id"])
                     unique_recommendations.append(article)
-                    
+                        
             # Sort by relevance score
             sorted_recommendations = sorted(
                 unique_recommendations, 
@@ -96,6 +102,7 @@ class RecommendationService:
         except Exception as e:
             logger.error(f"Error getting user recommendations: {str(e)}")
             return []
+
 
     def record_interaction(self, user_id, article_id, module_id=None, interaction_type="view"):
         """Record user interaction with an article"""
@@ -133,13 +140,13 @@ class RecommendationService:
             return False
 
     def get_trending_articles(self, days=7, limit=10):
-        """Get trending articles based on recent interactions"""
+        """Get trending content (articles and papers) based on recent interactions"""
         try:
             # Calculate date threshold
             from datetime import datetime, timedelta
             threshold_date = datetime.now() - timedelta(days=days)
             
-            # Get interaction counts for articles
+            # Get interaction counts for articles/papers
             pipeline = [
                 {"$match": {"created_at": {"$gte": threshold_date}}},
                 {"$group": {
@@ -147,24 +154,32 @@ class RecommendationService:
                     "interaction_count": {"$sum": 1}
                 }},
                 {"$sort": {"interaction_count": -1}},
-                {"$limit": limit}
+                {"$limit": limit * 2}  # Get more to ensure mix of types
             ]
             
-            trending_articles = list(interactions_collection.aggregate(pipeline))
+            trending_items = list(interactions_collection.aggregate(pipeline))
             
             # Get article details
             results = []
-            for item in trending_articles:
+            for item in trending_items:
                 article = articles_collection.find_one({"_id": item["_id"]})
                 if article:
                     article["interaction_count"] = item["interaction_count"]
                     article["_id"] = str(article["_id"])  # Convert ObjectId to string
+                    # Add type field
+                    if article.get("source_name") == "arXiv":
+                        article["type"] = "academic"
+                    else:
+                        article["type"] = "news"
                     results.append(article)
-                    
-            logger.info(f"Found {len(results)} trending articles")
+            
+            # Sort by interaction count and limit results
+            results = sorted(results, key=lambda x: x.get("interaction_count", 0), reverse=True)[:limit]
+                        
+            logger.info(f"Found {len(results)} trending items")
             return results
         except Exception as e:
-            logger.error(f"Error getting trending articles: {str(e)}")
+            logger.error(f"Error getting trending items: {str(e)}")
             return []
 
     def get_recommendations_by_keyword(self, keyword, limit=10):
