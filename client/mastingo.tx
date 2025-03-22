@@ -1,0 +1,26 @@
+  const darkColors = {
+    primary: '#4ADE80',         // Soft Green (Fresh, positive action)
+    secondary: '#F472B6',       // Soft Pink (Subtle highlight)
+    tertiary: '#60A5FA',        // Soft Blue (Calm accent)
+    quaternary: '#C084FC',      // Soft Purple (Supportive tone)
+    
+    background: '#121212',      // Deep Charcoal Black (Main background)
+    surface: '#1C1C1C',         // Surface (cards, containers)
+    elevatedSurface: '#262626', // Elevated surfaces or modals
+    
+    error: '#F87171',           // Warm Red (Error)
+    warning: '#FBBF24',         // Warm Amber (Warning)
+    success: '#34D399',         // Bright Green (Success)
+    
+    textPrimary: '#E5E5E5',     // Soft White (Main text)
+    textSecondary: '#9CA3AF',   // Cool Gray (Secondary text)
+    textMuted: '#6B7280',       // Muted Gray (Hints, placeholders)
+    
+    border: '#2A2A2A',          // Subtle border (hairline)
+    cardHover: '#333333',       // Slight lift on hover
+    
+    gradientOverlay: 'rgba(255, 255, 255, 0.04)', // Gentle highlight overlay
+    shadow: 'rgba(0, 0, 0, 0.7)',                 // Deeper shadow for depth
+    
+    focus: '#3B82F6',           // Bright Blue Focus (Accessibility)
+  };

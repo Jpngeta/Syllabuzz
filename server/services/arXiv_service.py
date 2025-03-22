@@ -3,7 +3,7 @@ import logging
 import requests
 import xml.etree.ElementTree as ET
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from bson.objectid import ObjectId
 from utils.db_utils import articles_collection
 
@@ -27,11 +27,14 @@ class ArxivService:
             elif search_query in ["cs", "stat", "math", "physics"]:
                 # Handle any main category
                 formatted_query = f"cat:{search_query}"
+            else:
+                # Default to using the search query as provided
+                formatted_query = search_query
                     
             # Add basic search if query uses complex syntax
-            if "all:" in formatted_query or "ti:" in formatted_query:
+            if "all:" in search_query or "ti:" in search_query:
                 # Keep it as is
-                pass
+                formatted_query = search_query
             
             # Prepare parameters
             params = {
@@ -49,6 +52,7 @@ class ArxivService:
             
             # Make API request with retries
             max_retries = 3
+            response = None
             for attempt in range(max_retries):
                 try:
                     response = requests.get(self.base_url, params=params, timeout=30)
@@ -65,8 +69,8 @@ class ArxivService:
                     if attempt < max_retries - 1:
                         time.sleep(2 * (attempt + 1))
             
-            if response.status_code != 200:
-                logger.error(f"All arXiv API attempts failed: {response.status_code}")
+            if response is None or response.status_code != 200:
+                logger.error(f"All arXiv API attempts failed")
                 return []
                 
             # Parse XML response - check response content first
@@ -168,16 +172,16 @@ class ArxivService:
                 
                 papers.append(paper)
 
-                if years_limit > 0:
-            # Calculate cutoff date
-                    from datetime import datetime, timedelta
-                    cutoff_date = datetime.now() - timedelta(days=365 * years_limit)
-                    
-                    # Filter papers by date
-                    filtered_papers = [paper for paper in papers if paper["published_at"] >= cutoff_date]
-                    
-                    logger.info(f"Date filtering: kept {len(filtered_papers)} out of {len(papers)} papers (limit: {years_limit} years)")
-                    papers = filtered_papers
+            # Apply years limit filter if specified
+            if years_limit > 0:
+                # Calculate cutoff date
+                cutoff_date = datetime.now() - timedelta(days=365 * years_limit)
+                
+                # Filter papers by date
+                filtered_papers = [paper for paper in papers if paper["published_at"] >= cutoff_date]
+                
+                logger.info(f"Date filtering: kept {len(filtered_papers)} out of {len(papers)} papers (limit: {years_limit} years)")
+                papers = filtered_papers
             
             logger.info(f"Successfully extracted {len(papers)} papers from arXiv for query: {search_query}")
             return papers
@@ -190,7 +194,7 @@ class ArxivService:
         try:
             # Fetch papers
             papers = self.fetch_papers(search_query=search_query, max_results=max_results, years_limit=years_limit)
-            print(papers)
+            print(f"Found {len(papers)} papers")
             
             # Store each paper
             stored_count = 0

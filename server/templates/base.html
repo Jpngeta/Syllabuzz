@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Syllabuzz{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+    /* Custom styles for Syllabuzz - Dark Theme */
+    :root {
+      --accent-color: #EE6C4D;
+      --accent-dark: #D9522B;
+      --dark-accent: #293241;
+      --dark-accent-light: #3D5A80;
+      --light-color: #E0FBFC;
+      --secondary-color: #98C1D9;
+      --bg-color: #1C2025;
+      --card-bg: #232830;
+      --text-color: #E0E0E0;
+      --text-muted: #98A4B8;
+      --transition: all 0.25s ease;
+    }
+    
+    body {
+      background-color: var(--bg-color);
+      font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    main {
+      flex: 1;
+    }
+    
+    /* Navbar styling */
+    .navbar {
+      background-color: var(--dark-accent) !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      padding: 0.75rem 0;
+    }
+    
+    .navbar-brand {
+      font-weight: 600;
+      color: var(--light-color) !important;
+      font-size: 1.5rem;
+    }
+    
+    .navbar-brand i {
+      color: var(--accent-color);
+    }
+    
+    .nav-link {
+      color: var(--text-muted) !important;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      position: relative;
+      transition: var(--transition);
+    }
+    
+    .nav-link:hover, .nav-link.active {
+      color: var(--light-color) !important;
+    }
+    
+    .nav-link.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 1rem;
+      right: 1rem;
+      height: 3px;
+      background-color: var(--accent-color);
+    }
+    
+    .dropdown-menu {
+      background-color: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    
+    .dropdown-item {
+      color: var(--text-color);
+      transition: var(--transition);
+    }
+    
+    .dropdown-item:hover, .dropdown-item.active {
+      background-color: var(--dark-accent-light);
+      color: white;
+    }
+    
+    /* Search form */
+    #searchForm .form-control {
+      background-color: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: var(--light-color);
+      border-radius: 0;
+    }
+    
+    #searchForm .form-control::placeholder {
+      color: var(--text-muted);
+    }
+    
+    #searchForm .btn {
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      border-radius: 0;
+    }
+    
+    #searchForm .btn:hover {
+      background-color: var(--accent-dark);
+    }
+    
+    /* Login/Signup buttons */
+    .btn-auth {
+      background-color: transparent;
+      border: 1px solid var(--accent-color);
+      color: var(--accent-color) !important;
+      border-radius: 0;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    
+    .btn-auth:hover {
+      background-color: var(--accent-color);
+      color: white !important;
+    }
+    
+    /* Footer */
+    footer {
+      background-color: var(--dark-accent);
+      color: var(--text-color);
+      padding: 3rem 0 1.5rem;
+      margin-top: 2rem;
+    }
+    
+    footer h5 {
+      color: var(--accent-color);
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      position: relative;
+      display: inline-block;
+    }
+    
+    footer h5::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -10px;
+      width: 40px;
+      height: 3px;
+      background-color: var(--accent-color);
+    }
+    
+    footer a {
+      color: var(--text-muted) !important;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+    
+    footer a:hover {
+      color: var(--accent-color) !important;
+      text-decoration: none;
+    }
+    
+    footer hr {
+      background-color: rgba(255, 255, 255, 0.1);
+      margin: 2rem 0;
+    }
+    
+    /* Card styles */
+    .card {
+      background-color: var(--card-bg);
+      border: none;
+      transition: var(--transition);
+      color: var(--text-color);
+    }
+    
+    .card-body {
+      background-color: var(--card-bg);
+    }
+    
+    .card-footer {
+      background-color: var(--card-bg) !important;
+    }
+    
+    /* Button styles */
+    .btn-accent {
+      background-color: var(--accent-color);
+      border-color: var(--accent-color);
+      color: white;
+    }
+    
+    .btn-accent:hover {
+      background-color: var(--accent-dark);
+      border-color: var(--accent-dark);
+      color: white;
+    }
+    
+    .btn-outline-accent {
+      color: var(--accent-color);
+      border-color: var(--accent-color);
+    }
+    
+    .btn-outline-accent:hover {
+      background-color: var(--accent-color);
+      border-color: var(--accent-color);
+      color: white;
+    }
+    
+    /* Text colors */
+    .text-accent {
+      color: var(--accent-color) !important;
+    }
+    
+    .text-secondary {
+      color: var(--secondary-color) !important;
+    }
+    
+    .text-muted {
+      color: var(--text-muted) !important;
+    }
+    
+    .text-light {
+      color: var(--light-color) !important;
+    }
+    
+    /* Background colors */
+    .bg-accent {
+      background-color: var(--accent-color) !important;
+    }
+    
+    .bg-dark-accent {
+      background-color: var(--dark-accent) !important;
+    }
+    
+    .bg-secondary {
+      background-color: var(--secondary-color) !important;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+      background-color: var(--bg-color);
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--dark-accent);
+      border-radius: 0;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent-color);
+      border-radius: 0;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-dark);
+    }
+    
+    /* Alert styling */
+    .alert-info {
+      background-color: rgba(152, 193, 217, 0.2);
+      color: var(--secondary-color);
+      border: none;
+    }
+    
+    .alert-danger {
+      background-color: rgba(238, 108, 77, 0.2);
+      color: var(--accent-color);
+      border: none;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 767.98px) {
+      .navbar-nav {
+        padding: 1rem 0;
+      }
+      
+      .nav-link.active::after {
+        display: none;
+      }
+      
+      #searchForm {
+        margin: 1rem 0;
+        width: 100%;
+      }
+    }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-graduation-cap me-2"></i>Syllabuzz
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == url_for('index') %}active{% endif %}" href="{{ url_for('index') }}">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="modulesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-book me-1"></i>CS Modules
+                        </a>
+                        <ul class="dropdown-menu" id="modulesDropdownMenu">
+                            <li><a class="dropdown-item" href="#" data-module-loading>Loading modules...</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-tag me-1"></i>Categories
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" data-category="technology">Technology</a></li>
+                            <li><a class="dropdown-item" href="#" data-category="science">Science</a></li>
+                            <li><a class="dropdown-item" href="#" data-category="education">Education</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="trendingLink">
+                            <i class="fas fa-chart-line me-1"></i>Trending
+                        </a>
+                    </li>
+                </ul>
+                
+                <form class="d-flex mx-2" id="searchForm">
+                    <input class="form-control me-0" type="search" placeholder="Search articles..." aria-label="Search" id="searchInput">
+                    <button class="btn" type="submit"><i class="fas fa-search"></i></button>
+                </form>
+                
+                <ul class="navbar-nav">
+                    {% if session.user_id %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle me-1"></i>{{ session.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}"><i class="fas fa-user me-2"></i>My Profile</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}#bookmarks"><i class="fas fa-bookmark me-2"></i>Bookmarks</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link btn-auth px-3 mx-1" href="{{ url_for('auth.login') }}"><i class="fas fa-sign-in-alt me-1"></i>Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn-auth px-3 mx-1" href="{{ url_for('auth.signup') }}"><i class="fas fa-user-plus me-1"></i>Sign Up</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container py-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="row gy-4">
+                <div class="col-lg-5 col-md-6">
+                    <h5>About Syllabuzz</h5>
+                    <p>A personalized news recommendation system for Computer Science students and professionals. Stay updated with relevant articles tailored to your academic interests.</p>
+                    <div class="d-flex mt-4">
+                        <a href="#" class="me-3"><i class="fab fa-twitter fa-lg"></i></a>
+                        <a href="#" class="me-3"><i class="fab fa-github fa-lg"></i></a>
+                        <a href="#" class="me-3"><i class="fab fa-linkedin fa-lg"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{{ url_for('index') }}"><i class="fas fa-chevron-right me-2"></i>Home</a></li>
+                        <li class="mb-2"><a href="#" id="footerTrendingLink"><i class="fas fa-chevron-right me-2"></i>Trending Articles</a></li>
+                        {% if not session.user_id %}
+                        <li class="mb-2"><a href="{{ url_for('auth.login') }}"><i class="fas fa-chevron-right me-2"></i>Login</a></li>
+                        <li class="mb-2"><a href="{{ url_for('auth.signup') }}"><i class="fas fa-chevron-right me-2"></i>Sign Up</a></li>
+                        {% else %}
+                        <li class="mb-2"><a href="{{ url_for('auth.profile') }}"><i class="fas fa-chevron-right me-2"></i>My Profile</a></li>
+                        <li class="mb-2"><a href="{{ url_for('auth.profile') }}#bookmarks"><i class="fas fa-chevron-right me-2"></i>My Bookmarks</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="col-lg-4 col-md-12">
+                    <h5>Powered By</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="https://newsapi.org/" target="_blank"><i class="fas fa-external-link-alt me-2"></i>News API</a></li>
+                        <li class="mb-2"><a href="https://www.sbert.net/" target="_blank"><i class="fas fa-external-link-alt me-2"></i>Sentence-BERT</a></li>
+                    </ul>
+                    <div class="mt-4">
+                        <p class="text-muted mb-1">Subscribe to our newsletter</p>
+                        <div class="input-group">
+                            <input type="email" class="form-control" placeholder="Your email" style="background-color: rgba(255,255,255,0.1); border: none; color: var(--text-color);">
+                            <button class="btn btn-accent" type="button">Subscribe</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p class="mb-0">&copy;  Syllabuzz. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

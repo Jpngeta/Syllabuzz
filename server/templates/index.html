@@ -1,0 +1,1852 @@
+
+{% extends "base.html" %}
+
+{% block title %}Syllabuzz - Home{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-5">
+    <div class="row g-4">
+        <!-- Hero Section with Improved Layout -->
+        <div class="col-12">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden hero-card">
+                <div class="card-body p-0">
+                    <div class="row g-0">
+                        <div class="col-lg-7 p-5 d-flex flex-column justify-content-center">
+                            <h1 class="display-4 fw-bold text-accent mb-3">Welcome to Syllabuzz</h1>
+                            <p class="lead mb-3">Stay updated with the latest articles and news relevant to your Computer Science modules.</p>
+                            <p class="text-muted mb-4">Our AI-powered recommendation system analyzes articles to find the most relevant content for your specific CS interests.</p>
+                            
+                            <div class="d-grid gap-3 d-md-flex mt-4">
+                                <a href="javascript:void(0)" id="personalizeBtn" class="btn btn-accent btn-lg px-4 shadow-sm">
+                                    <i class="fas fa-user-cog me-2"></i>Personalize
+                                </a>
+                                <a href="#featured-section" class="btn btn-outline-secondary btn-lg px-4">
+                                    <i class="fas fa-newspaper me-2"></i>Browse Articles
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-lg-5 d-none d-lg-block p-0">
+                            <div class="h-100 position-relative overflow-hidden">
+                                <div class="hero-overlay"></div>
+                                <img src="https://images.unsplash.com/reserve/uZYSV4nuQeyq64azfVIn_15130980706_64134efc6e_o.jpg?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzF8fG5ld3N8ZW58MHx8MHx8fDA%3D" alt="Syllabuzz Hero" class="w-100 h-100 object-cover hero-image" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Section with Improved Layout -->
+        <div class="col-12">
+            <!-- Modules and Articles in Flex Layout -->
+            <div class="row g-4">
+                <!-- CS Modules Card -->
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-lg h-100 module-card">
+                        <div class="card-header bg-dark-accent text-white border-0 py-3 px-4">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-book me-2"></i>
+                                <h5 class="mb-0 fw-semibold">CS Modules</h5>
+                            </div>
+                        </div>
+                        <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
+                            <div id="modulesList" class="module-list">
+                                <div class="p-4 text-center">
+                                    <div class="spinner-border spinner-border-sm text-accent me-2" role="status"></div>
+                                    <span class="text-muted">Loading modules...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 p-4">
+                            <a href="javascript:void(0)" id="loadAllModulesBtn" class="btn btn-outline-accent w-100">
+                                <i class="fas fa-th-list me-2"></i>View All Modules
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Latest Articles Card -->
+                <div class="col-lg-8" id="featured-section">
+                    <div class="card border-0 shadow-lg h-100 article-list-card">
+                        <div class="card-header bg-dark-accent text-white border-0 py-3 px-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-newspaper me-2"></i>
+                                    <h5 class="mb-0 fw-semibold">Latest Articles</h5>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-light dropdown-toggle px-3" type="button" id="latestArticlesFilter" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-filter me-1"></i>All Categories
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="latestArticlesFilter">
+                                        <li><a class="dropdown-item active" href="javascript:void(0)" data-filter="all">All Categories</a></li>
+                                        <li><a class="dropdown-item" href="javascript:void(0)" data-filter="technology">Technology</a></li>
+                                        <li><a class="dropdown-item" href="javascript:void(0)" data-filter="science">Science</a></li>
+                                        <li><a class="dropdown-item" href="javascript:void(0)" data-filter="education">Education</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="latestArticlesList" class="articles-list" style="max-height: 400px; overflow-y: auto; padding: 1rem;">
+                                <div class="d-flex justify-content-center py-4">
+                                    <div class="spinner-border text-accent" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 p-4">
+                            <a href="javascript:void(0)" id="loadMoreArticlesBtn" class="btn btn-outline-accent w-100">
+                                <i class="fas fa-sync-alt me-2"></i>Load More Articles
+                            </a>
+                        </div>
+                    </div>
+                </div>
+        <!-- Trending Section with Improved Card Design -->
+        <div class="col-12 mt-4">
+            <div class="card border-0 shadow-lg rounded-4 trending-section-card">
+                <div class="card-header bg-dark-accent text-white border-0 py-3 px-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-chart-line me-2"></i>
+                        <h5 class="mb-0 fw-semibold">Trending Articles</h5>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4" id="trendingArticlesList">
+                        <div class="col-12 text-center py-4">
+                            <div class="spinner-border text-accent" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Personalization Modal with Improved Design -->
+<div class="modal fade" id="personalizeModal" tabindex="-1" aria-labelledby="personalizeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-dark-accent text-white border-0 px-4 py-3">
+                <h5 class="modal-title fw-semibold" id="personalizeModalLabel">
+                    <i class="fas fa-user-cog me-2"></i>Personalize Your Recommendations
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted mb-3">Select the CS modules you're interested in to receive tailored article recommendations:</p>
+                <form id="personalizeForm">
+                    <div id="personalizeModuleList" class="module-checkbox-list">
+                        <div class="text-center py-3">
+                            <div class="spinner-border spinner-border-sm text-accent me-2" role="status"></div>
+                            <span class="text-muted">Loading modules...</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 px-4 py-3">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-accent rounded-pill px-4" id="savePreferencesBtn">
+                    <i class="fas fa-save me-2"></i>Save Preferences
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Redesigned Article Detail Modal -->
+<div class="modal fade" id="articleDetailModal" tabindex="-1" aria-labelledby="articleDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            <!-- Modal Header with Accent Color -->
+            <div class="modal-header border-0 px-4 py-3" style="background-color: #232830;">
+                <div class="d-flex align-items-center">
+                    <div class="article-category-indicator me-3"></div>
+                    <h5 class="modal-title fw-semibold text-white" id="articleDetailModalLabel">Article Details</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <!-- Article Content Section -->
+            <div class="modal-body p-0" id="articleDetailContainer">
+                <!-- Article Featured Image -->
+                <div class="article-featured-image-container">
+                    <div id="articleImageContainer"></div>
+                    <div class="article-meta-overlay">
+                        <div class="d-flex justify-content-between align-items-center w-100">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-accent me-2" id="articleSource">
+                                    <i class="fas fa-newspaper me-1"></i><span>Source</span>
+                                </span>
+                                <span class="badge bg-dark me-2" id="articleDate">
+                                    <i class="far fa-calendar-alt me-1"></i><span>Date</span>
+                                </span>
+                            </div>
+                            <div class="d-flex">
+                                <span class="badge bg-dark" id="articleRelevance">
+                                    <i class="fas fa-percentage me-1"></i><span>Relevance</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Article Content -->
+                <div class="p-4" id="articleDetailContent">
+                    <div class="text-center py-5">
+                        <div class="spinner-border" style="color: #EE6C4D;" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Article Categories -->
+                <div class="px-4 pb-3" id="articleCategoriesContainer">
+                    <h6 class="fw-bold mb-3" style="color: #EE6C4D;">Categories</h6>
+                    <div class="d-flex flex-wrap gap-2" id="articleCategories">
+                        <!-- Categories will be added here dynamically -->
+                    </div>
+                </div>
+                
+                <!-- Related Articles Section -->
+                <div class="px-4 pb-4" id="relatedArticlesContainer">
+                    <h6 class="fw-bold mb-3" style="color: #EE6C4D;">Related Articles</h6>
+                    <div class="row g-3" id="relatedArticles">
+                        <!-- Related articles will be added here dynamically -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal Footer with Action Buttons -->
+            <div class="modal-footer border-0 px-4 py-3" style="background-color: #232830;">
+                <div class="d-flex flex-wrap gap-2 w-100 justify-content-between">
+                    <div>
+                        <button type="button" class="btn btn-sm" style="background-color: transparent; border: 1px solid rgba(255,255,255,0.2); color: white;" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Close
+                        </button>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm" style="background-color: transparent; border: 1px solid rgba(255,255,255,0.2); color: white;" id="saveArticleBtn">
+                            <i class="far fa-bookmark me-1"></i>Save
+                        </button>
+                        <button type="button" class="btn btn-sm" style="background-color: transparent; border: 1px solid rgba(255,255,255,0.2); color: white;" id="shareArticleBtn">
+                            <i class="fas fa-share-alt me-1"></i>Share
+                        </button>
+                        <a href="#" class="btn btn-sm" style="background-color: #EE6C4D; color: white;" id="readFullArticleBtn" target="_blank">
+                            <i class="fas fa-external-link-alt me-1"></i>Read Full Article
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional CSS for the Redesigned Modal -->
+<style>
+    /* Article Detail Modal Styles */
+    #articleDetailModal .modal-content {
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: #232830;
+        color: #E0E0E0;
+    }
+    
+    .article-category-indicator {
+        width: 4px;
+        height: 24px;
+        background-color: #EE6C4D;
+        border-radius: 2px;
+    }
+    
+    .article-featured-image-container {
+        position: relative;
+        width: 100%;
+        height: 280px;
+        overflow: hidden;
+        background-color: #1C2025;
+    }
+    
+    #articleImageContainer {
+        width: 100%;
+        height: 100%;
+    }
+    
+    #articleImageContainer img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .article-meta-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 16px;
+        background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .badge {
+        font-weight: 500;
+        padding: 0.5em 1em;
+        border-radius: 4px;
+    }
+    
+    .bg-accent {
+        background-color: #EE6C4D !important;
+    }
+    
+    .bg-dark {
+        background-color: rgba(28, 32, 37, 0.8) !important;
+    }
+    
+    #articleDetailContent h1, 
+    #articleDetailContent h2, 
+    #articleDetailContent h3, 
+    #articleDetailContent h4, 
+    #articleDetailContent h5, 
+    #articleDetailContent h6 {
+        color: #E0E0E0;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    #articleDetailContent p {
+        margin-bottom: 1rem;
+        line-height: 1.6;
+    }
+    
+    #articleDetailContent blockquote {
+        border-left: 4px solid #EE6C4D;
+        padding-left: 1rem;
+        margin-left: 0;
+        font-style: italic;
+        color: #98A4B8;
+    }
+    
+    .related-article-card {
+        background-color: #1C2025;
+        border-radius: 8px;
+        padding: 12px;
+        transition: all 0.25s ease;
+        cursor: pointer;
+    }
+    
+    .related-article-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    .related-article-card h6 {
+        font-size: 14px;
+        margin-bottom: 8px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .related-article-card small {
+        font-size: 12px;
+        color: #98A4B8;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+<script>
+    // User ID for demo purposes - in a real app, this would come from authentication
+    const demoUserId = '65eef1234567890123456789';
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load initial data
+        loadModules();
+        loadLatestArticles();
+        loadTrendingArticles();
+        
+        // Event listeners
+        document.getElementById('personalizeBtn').addEventListener('click', showPersonalizeModal);
+        document.getElementById('savePreferencesBtn').addEventListener('click', savePreferences);
+        document.getElementById('loadMoreArticlesBtn').addEventListener('click', loadMoreArticles);
+        
+        // Check for these elements before adding listeners
+        const trendingLink = document.getElementById('trendingLink');
+        if (trendingLink) {
+            trendingLink.addEventListener('click', scrollToTrending);
+        }
+        
+        const footerTrendingLink = document.getElementById('footerTrendingLink');
+        if (footerTrendingLink) {
+            footerTrendingLink.addEventListener('click', scrollToTrending);
+        }
+        
+        const searchForm = document.getElementById('searchForm');
+        if (searchForm) {
+            searchForm.addEventListener('submit', handleSearch);
+        }
+        
+        // Filter latest articles by category
+        document.querySelectorAll('[data-filter]').forEach(element => {
+            element.addEventListener('click', function(e) {
+                e.preventDefault();
+                const filter = this.getAttribute('data-filter');
+                document.getElementById('latestArticlesFilter').innerHTML = 
+                    filter === 'all' ? '<i class="fas fa-filter me-1"></i>All Categories' : 
+                    `<i class="fas fa-filter me-1"></i>${filter.charAt(0).toUpperCase() + filter.slice(1)}`;
+                loadLatestArticles(filter === 'all' ? null : filter);
+                
+                // Update active state
+                document.querySelectorAll('[data-filter]').forEach(el => {
+                    el.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+    });
+    
+    // Load modules for navigation and display
+    function loadModules() {
+        fetch('/api/modules')
+            .then(response => response.json())
+            .then(data => {
+                if (data.modules && data.modules.length > 0) {
+                    // Populate dropdown menu
+                    const dropdownMenu = document.getElementById('modulesDropdownMenu');
+                    if (dropdownMenu) {
+                        dropdownMenu.innerHTML = '';
+                        
+                        data.modules.forEach(module => {
+                            const li = document.createElement('li');
+                            const a = document.createElement('a');
+                            a.className = 'dropdown-item';
+                            a.href = '#';
+                            a.textContent = `${module.code}: ${module.name}`;
+                            a.setAttribute('data-module-id', module._id);
+                            a.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                showModuleRecommendations(module._id, module.name);
+                            });
+                            li.appendChild(a);
+                            dropdownMenu.appendChild(li);
+                        });
+                    }
+                    
+                    // Populate modules list
+                    const modulesList = document.getElementById('modulesList');
+                    modulesList.innerHTML = '';
+                    
+                    // Show first 5 modules only
+                    const displayModules = data.modules;
+                    
+                    displayModules.forEach(module => {
+                        const moduleItem = document.createElement('div');
+                        moduleItem.className = 'p-3 border-bottom border-light module-item';
+                        moduleItem.innerHTML = `
+                            <h6 class="fw-semibold mb-2">${module.code}: ${module.name}</h6>
+                            <p class="text-muted small mb-3">${module.description.substring(0, 100)}...</p>
+                            <button class="btn btn-sm btn-outline-primary rounded-pill view-recommendations" 
+                                data-module-id="${module._id}" data-module-name="${module.name}">
+                                <i class="fas fa-list-alt me-1"></i>View Recommendations
+                            </button>
+                        `;
+                        modulesList.appendChild(moduleItem);
+                    });
+                    
+                    // Add event listeners for recommendation buttons
+                    document.querySelectorAll('.view-recommendations').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const moduleId = this.getAttribute('data-module-id');
+                            const moduleName = this.getAttribute('data-module-name');
+                            showModuleRecommendations(moduleId, moduleName);
+                        });
+                    });
+                    
+                    // Populate personalization modal
+                    const personalizeModuleList = document.getElementById('personalizeModuleList');
+                    personalizeModuleList.innerHTML = '';
+                    
+                    data.modules.forEach(module => {
+                        const moduleCheckbox = document.createElement('div');
+                        moduleCheckbox.className = 'form-check custom-checkbox mb-3';
+                        moduleCheckbox.innerHTML = `
+                            <input class="form-check-input" type="checkbox" value="${module._id}" id="module${module._id}">
+                            <label class="form-check-label" for="module${module._id}">
+                                <span class="fw-semibold">${module.code}:</span> ${module.name}
+                            </label>
+                            <p class="text-muted small mt-1 ms-4">${module.description.substring(0, 60)}...</p>
+                        `;
+                        personalizeModuleList.appendChild(moduleCheckbox);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading modules:', error);
+                document.getElementById('modulesList').innerHTML = `
+                    <div class="alert alert-danger rounded-3">
+                        <i class="fas fa-exclamation-circle me-2"></i>Failed to load modules. Please try again later.
+                    </div>
+                `;
+            });
+    }
+    
+    // Load latest articles
+    let articlesPage = 1;
+    let currentCategory = null;
+    
+    function loadLatestArticles(category = null, reset = true) {
+        if (reset) {
+            articlesPage = 1;
+            currentCategory = category;
+        }
+        
+        const latestArticlesList = document.getElementById('latestArticlesList');
+        
+        if (reset) {
+            latestArticlesList.innerHTML = `
+                <div class="d-flex justify-content-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Add loading indicator at bottom
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'd-flex justify-content-center mt-4';
+            loadingIndicator.innerHTML = `
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading more...</span>
+                </div>
+            `;
+            latestArticlesList.appendChild(loadingIndicator);
+        }
+        
+        let url = `/api/articles?limit=5&skip=${(articlesPage - 1) * 5}`;
+        if (category) {
+            url += `&category=${category}`;
+        }
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (reset) {
+                    latestArticlesList.innerHTML = '';
+                } else {
+                    // Remove loading indicator
+                    latestArticlesList.removeChild(latestArticlesList.lastChild);
+                }
+                
+                if (data.articles && data.articles.length > 0) {
+                    data.articles.forEach(article => {
+                        const articleDate = new Date(article.published_at);
+                        const formattedDate = articleDate.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                        
+                        const articleItem = document.createElement('div');
+                        articleItem.className = 'card mb-4 border-0 shadow-sm article-card rounded-4 overflow-hidden';
+                        articleItem.setAttribute('data-article-id', article._id);
+                        
+                        let imageHtml = '';
+                        if (article.image_url) {
+                            imageHtml = `
+                                <div class="row g-0">
+                                    <div class="col-md-4">
+                                        <img src="${article.image_url}" class="img-fluid rounded-start h-100 object-fit-cover" alt="${article.title}">
+                                    </div>
+                                    <div class="col-md-8">
+                            `;
+                        }
+                        
+                        articleItem.innerHTML = `
+                            ${article.image_url ? imageHtml : '<div class="card-body p-4">'}
+                                <div class="card-body p-4">
+                                    <h5 class="card-title fw-bold mb-3">${article.title}</h5>
+                                    <p class="card-text text-secondary mb-3">${article.description || 'No description available.'}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <p class="card-text mb-0">
+                                            <small class="text-muted d-flex align-items-center">
+                                                <i class="fas fa-newspaper me-1"></i><span class="me-2">${article.source_name}</span>
+                                                <i class="far fa-calendar-alt me-1"></i><span>${formattedDate}</span>
+                                            </small>
+                                        </p>
+                                        <button class="btn btn-sm btn-primary rounded-pill view-article-btn">
+                                            <i class="fas fa-book-reader me-1"></i>Read More
+                                        </button>
+                                    </div>
+                                </div>
+                            ${article.image_url ? '</div></div>' : ''}
+                        `;
+                        
+                        // Add event listener to the Read More button
+                        articleItem.querySelector('.view-article-btn').addEventListener('click', function() {
+                            viewArticleDetails(article._id);
+                        });
+                        
+                        latestArticlesList.appendChild(articleItem);
+                    });
+                    
+                    // Enable/disable "Load More" button
+                    const loadMoreBtn = document.getElementById('loadMoreArticlesBtn');
+                    if (data.articles.length < 5) {
+                        loadMoreBtn.disabled = true;
+                        loadMoreBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>No More Articles';
+                        loadMoreBtn.classList.replace('btn-outline-primary', 'btn-outline-secondary');
+                    } else {
+                        loadMoreBtn.disabled = false;
+                        loadMoreBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Load More Articles';
+                        loadMoreBtn.classList.replace('btn-outline-secondary', 'btn-outline-primary');
+                    }
+                    
+                    articlesPage++;
+                } else {
+                    if (reset) {
+                        latestArticlesList.innerHTML = `
+                            <div class="alert alert-info rounded-3 m-3">
+                                <i class="fas fa-info-circle me-2"></i>No articles found.
+                            </div>
+                        `;
+                    }
+                    
+                    // Disable "Load More" button
+                    const loadMoreBtn = document.getElementById('loadMoreArticlesBtn');
+                    loadMoreBtn.disabled = true;
+                    loadMoreBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>No More Articles';
+                    loadMoreBtn.classList.replace('btn-outline-primary', 'btn-outline-secondary');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading articles:', error);
+                if (reset) {
+                    latestArticlesList.innerHTML = `
+                        <div class="alert alert-danger rounded-3 m-3">
+                            <i class="fas fa-exclamation-circle me-2"></i>Failed to load articles. Please try again later.
+                        </div>
+                    `;
+                } else {
+                    // Remove loading indicator and show error
+                    latestArticlesList.removeChild(latestArticlesList.lastChild);
+                    const errorMessage = document.createElement('div');
+                    errorMessage.className = 'alert alert-danger rounded-3 m-3';
+                    errorMessage.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Failed to load more articles. Please try again later.';
+                    latestArticlesList.appendChild(errorMessage);
+                }
+            });
+    }
+    
+    // Load trending articles
+    function loadTrendingArticles() {
+        const trendingList = document.getElementById('trendingArticlesList');
+        
+        fetch('/api/trending?limit=4')
+            .then(response => response.json())
+            .then(data => {
+                trendingList.innerHTML = '';
+                
+                if (data.trending && data.trending.length > 0) {
+                    data.trending.forEach(article => {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-6 col-lg-3';
+                        
+                        const card = document.createElement('div');
+                        card.className = 'card h-100 border-0 shadow-sm trending-card rounded-4 overflow-hidden';
+                        card.setAttribute('data-article-id', article._id);
+                        
+                        let imageHtml = '';
+                        if (article.image_url) {
+                            imageHtml = `<img src="${article.image_url}" class="card-img-top" style="height: 160px; object-fit: cover;" alt="${article.title}">`;
+                        }
+                        
+                        card.innerHTML = `
+                            ${imageHtml}
+                            <div class="card-body p-4">
+                                <span class="badge bg-primary text-white position-absolute top-0 end-0 m-2 rounded-pill px-3 py-2">
+                                    <i class="fas fa-fire-alt me-1"></i>Trending
+                                </span>
+                                <h6 class="card-title fw-bold mb-3">${article.title}</h6>
+                                <p class="card-text small text-secondary">${article.description ? article.description.substring(0, 80) + '...' : 'No description available.'}</p>
+                            </div>
+                            <div class="card-footer bg-white border-0 p-3">
+                                <button class="btn btn-sm btn-outline-primary w-100 rounded-pill view-article-btn">
+                                    <i class="fas fa-book-reader me-1"></i>View Article
+                                </button>
+                            </div>
+                        `;
+                        
+                        // Add event listener
+                        card.querySelector('.view-article-btn').addEventListener('click', function() {
+                            viewArticleDetails(article._id);
+                        });
+                        
+                        col.appendChild(card);
+                        trendingList.appendChild(col);
+                    });
+                } else {
+                    trendingList.innerHTML = `
+                        <div class="col-12">
+                            <div class="alert alert-info rounded-3">
+                                <i class="fas fa-info-circle me-2"></i>No trending articles found.
+                            </div>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading trending articles:', error);
+                trendingList.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-danger rounded-3">
+                            <i class="fas fa-exclamation-circle me-2"></i>Failed to load trending articles. Please try again later.
+                        </div>
+                    </div>
+                `;
+            });
+    }
+    
+    // Show module recommendations
+    function showModuleRecommendations(moduleId, moduleName) {
+        // Clear current articles and show loading
+        const latestArticlesList = document.getElementById('latestArticlesList');
+        latestArticlesList.innerHTML = `
+            <div class="d-flex justify-content-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        `;
+        
+        // Update header
+        const header = document.querySelector('.card-header h5');
+        header.innerHTML = `<i class="fas fa-book me-2"></i>Recommendations for ${moduleName}`;
+        
+        // Fetch recommendations
+        fetch(`/api/modules/${moduleId}/recommendations?limit=10`)
+            .then(response => response.json())
+            .then(data => {
+                latestArticlesList.innerHTML = '';
+                
+                if (data.recommendations && data.recommendations.length > 0) {
+                    data.recommendations.forEach(article => {
+                        const articleDate = new Date(article.published_at);
+                        const formattedDate = articleDate.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                        
+                        const relevancePercentage = Math.round(article.relevance_score * 100);
+                        
+                        const articleItem = document.createElement('div');
+                        articleItem.className = 'card mb-4 border-0 shadow-sm article-card rounded-4 overflow-hidden';
+                        articleItem.setAttribute('data-article-id', article._id);
+                        
+                        let imageHtml = '';
+                        if (article.image_url) {
+                            imageHtml = `
+                                <div class="row g-0">
+                                    <div class="col-md-4">
+                                        <img src="${article.image_url}" class="img-fluid rounded-start h-100 object-fit-cover" alt="${article.title}">
+                                    </div>
+                                    <div class="col-md-8">
+                            `;
+                        }
+                        
+                        articleItem.innerHTML = `
+                            ${article.image_url ? imageHtml : '<div class="card-body p-4">'}
+                                <div class="card-body p-4">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <h5 class="card-title fw-bold mb-0">${article.title}</h5>
+                                        <span class="badge bg-accent ms-2">${relevancePercentage}% Match</span>
+                                    </div>
+                                    <p class="card-text text-secondary mb-3">${article.description || 'No description available.'}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <p class="card-text mb-0">
+                                            <small class="text-muted d-flex align-items-center">
+                                                <i class="fas fa-newspaper me-1"></i><span class="me-2">${article.source_name}</span>
+                                                <i class="far fa-calendar-alt me-1"></i><span>${formattedDate}</span>
+                                            </small>
+                                        </p>
+                                        <button class="btn btn-sm btn-primary rounded-pill view-article-btn">
+                                            <i class="fas fa-book-reader me-1"></i>Read More
+                                        </button>
+                                    </div>
+                                </div>
+                            ${article.image_url ? '</div></div>' : ''}
+                        `;
+                        
+                        // Add event listener to the Read More button
+                        articleItem.querySelector('.view-article-btn').addEventListener('click', function() {
+                            viewArticleDetails(article._id, moduleId);
+                        });
+                        
+                        latestArticlesList.appendChild(articleItem);
+                    });
+                    
+                    // Hide "Load More" button
+                    document.getElementById('loadMoreArticlesBtn').style.display = 'none';
+                } else {
+                    latestArticlesList.innerHTML = `
+                        <div class="alert alert-info rounded-3 m-3">
+                            <i class="fas fa-info-circle me-2"></i>No recommendations found for this module.
+                        </div>
+                    `;
+                    document.getElementById('loadMoreArticlesBtn').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading module recommendations:', error);
+                latestArticlesList.innerHTML = `
+                    <div class="alert alert-danger rounded-3 m-3">
+                        <i class="fas fa-exclamation-circle me-2"></i>Failed to load recommendations. Please try again later.
+                    </div>
+                `;
+            });
+    }
+    
+ // Updated viewArticleDetails function for the redesigned modal
+function viewArticleDetails(articleId, moduleId = null) {
+    const modalContent = document.getElementById('articleDetailContent');
+    const articleImageContainer = document.getElementById('articleImageContainer');
+    const articleSource = document.getElementById('articleSource');
+    const articleDate = document.getElementById('articleDate');
+    const articleRelevance = document.getElementById('articleRelevance');
+    const articleCategories = document.getElementById('articleCategories');
+    const relatedArticles = document.getElementById('relatedArticles');
+    const readFullArticleBtn = document.getElementById('readFullArticleBtn');
+    
+    // Reset/prepare containers
+    modalContent.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border" style="color: #EE6C4D;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    `;
+    
+    articleImageContainer.innerHTML = '';
+    articleSource.innerHTML = '<i class="fas fa-newspaper me-1"></i><span>Loading...</span>';
+    articleDate.innerHTML = '<i class="far fa-calendar-alt me-1"></i><span>Loading...</span>';
+    articleRelevance.style.display = 'none';
+    articleCategories.innerHTML = '';
+    relatedArticles.innerHTML = '';
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('articleDetailModal'));
+    modal.show();
+    
+    // Record interaction
+    recordInteraction(articleId, moduleId);
+    
+    // Fetch article details
+    fetch(`/api/articles/${articleId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.article) {
+                const article = data.article;
+                const articleDate = new Date(article.published_at);
+                const formattedDate = articleDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                
+                // Update modal title
+                document.getElementById('articleDetailModalLabel').textContent = article.title;
+                
+                // Update metadata
+                document.getElementById('articleSource').innerHTML = `
+                    <i class="fas fa-newspaper me-1"></i><span>${article.source_name}</span>
+                `;
+                document.getElementById('articleDate').innerHTML = `
+                    <i class="far fa-calendar-alt me-1"></i><span>${formattedDate}</span>
+                `;
+                
+                // Show relevance if available
+                if (article.relevance_score) {
+                    const relevancePercentage = Math.round(article.relevance_score * 100);
+                    document.getElementById('articleRelevance').style.display = 'inline-flex';
+                    document.getElementById('articleRelevance').innerHTML = `
+                        <i class="fas fa-percentage me-1"></i><span>${relevancePercentage}% Match</span>
+                    `;
+                } else {
+                    document.getElementById('articleRelevance').style.display = 'none';
+                }
+                
+                // Add image if available
+                if (article.image_url) {
+                    articleImageContainer.innerHTML = `<img src="${article.image_url}" alt="${article.title}">`;
+                } else {
+                    articleImageContainer.innerHTML = `
+                        <div class="d-flex justify-content-center align-items-center h-100 bg-dark">
+                            <i class="fas fa-newspaper fa-3x" style="color: #3D5A80;"></i>
+                        </div>
+                    `;
+                }
+                
+                // Update read full article button
+                readFullArticleBtn.href = article.url;
+                
+                // Build article content
+                let contentHtml = '';
+                
+                // Add description
+                if (article.description) {
+                    contentHtml += `
+                        <div class="mb-4">
+                            <h5 class="fw-semibold mb-3">Overview</h5>
+                            <p class="lead">${article.description}</p>
+                        </div>
+                    `;
+                }
+                
+                // Add content if available
+                if (article.content) {
+                    contentHtml += `
+                        <div class="mb-4">
+                            <h5 class="fw-semibold mb-3">Content Preview</h5>
+                            <div class="p-3" style="background-color: #1C2025; border-radius: 8px;">
+                                <p>${article.content}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                modalContent.innerHTML = contentHtml || '<p class="text-center text-muted">No content available for this article.</p>';
+                
+                // Add categories if available
+                if (article.categories && article.categories.length > 0) {
+                    document.getElementById('articleCategoriesContainer').style.display = 'block';
+                    const categoriesContainer = document.getElementById('articleCategories');
+                    categoriesContainer.innerHTML = '';
+                    
+                    article.categories.forEach(category => {
+                        const badge = document.createElement('span');
+                        badge.className = 'badge';
+                        badge.style.backgroundColor = '#1C2025';
+                        badge.style.color = '#E0E0E0';
+                        badge.textContent = category;
+                        categoriesContainer.appendChild(badge);
+                    });
+                } else {
+                    document.getElementById('articleCategoriesContainer').style.display = 'none';
+                }
+                
+                // Fetch related articles
+                fetchRelatedArticles(articleId, moduleId);
+                
+            } else {
+                modalContent.innerHTML = `
+                    <div class="alert alert-danger" style="border-radius: 8px;">
+                        <i class="fas fa-exclamation-circle me-2"></i>Article not found.
+                    </div>
+                `;
+                document.getElementById('articleCategoriesContainer').style.display = 'none';
+                document.getElementById('relatedArticlesContainer').style.display = 'none';
+                readFullArticleBtn.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading article details:', error);
+            modalContent.innerHTML = `
+                <div class="alert alert-danger" style="border-radius: 8px;">
+                    <i class="fas fa-exclamation-circle me-2"></i>Failed to load article details. Please try again later.
+                </div>
+            `;
+            document.getElementById('articleCategoriesContainer').style.display = 'none';
+            document.getElementById('relatedArticlesContainer').style.display = 'none';
+            readFullArticleBtn.style.display = 'none';
+        });
+}
+
+// Fetch related articles
+function fetchRelatedArticles(articleId, moduleId = null) {
+    const relatedArticlesContainer = document.getElementById('relatedArticlesContainer');
+    const relatedArticles = document.getElementById('relatedArticles');
+    
+    let url = `/api/articles/${articleId}/related?limit=3`;
+    if (moduleId) {
+        url += `&moduleId=${moduleId}`;
+    }
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.articles && data.articles.length > 0) {
+                relatedArticlesContainer.style.display = 'block';
+                relatedArticles.innerHTML = '';
+                
+                data.articles.forEach(article => {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-4';
+                    
+                    const articleDate = new Date(article.published_at);
+                    const formattedDate = articleDate.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                    
+                    col.innerHTML = `
+                        <div class="related-article-card" data-article-id="${article._id}">
+                            <h6 class="mb-2">${article.title}</h6>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small>${article.source_name}</small>
+                                <small>${formattedDate}</small>
+                            </div>
+                        </div>
+                    `;
+                    
+                    col.querySelector('.related-article-card').addEventListener('click', function() {
+                        const articleId = this.getAttribute('data-article-id');
+                        viewArticleDetails(articleId, moduleId);
+                    });
+                    
+                    relatedArticles.appendChild(col);
+                });
+            } else {
+                relatedArticlesContainer.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading related articles:', error);
+            relatedArticlesContainer.style.display = 'none';
+        });
+}
+
+// Initialize event listeners for new Save and Share buttons
+document.addEventListener('DOMContentLoaded', function() {
+    // Existing event listeners...
+    
+    // Add new event listeners for Save and Share buttons
+    const saveArticleBtn = document.getElementById('saveArticleBtn');
+    if (saveArticleBtn) {
+        saveArticleBtn.addEventListener('click', function() {
+            const articleId = document.querySelector('.modal-content').getAttribute('data-current-article');
+            saveArticle(articleId);
+        });
+    }
+    
+    const shareArticleBtn = document.getElementById('shareArticleBtn');
+    if (shareArticleBtn) {
+        shareArticleBtn.addEventListener('click', function() {
+            const articleId = document.querySelector('.modal-content').getAttribute('data-current-article');
+            shareArticle(articleId);
+        });
+    }
+});
+
+// Save article function (placeholder)
+function saveArticle(articleId) {
+    // This would be implemented to save to user's bookmarks
+    console.log('Saving article:', articleId);
+    
+    // Show success message
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed top-0 end-0 p-3';
+    toast.style.zIndex = '1070';
+    toast.innerHTML = `
+        <div class="toast align-items-center" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-check-circle me-2" style="color: #EE6C4D;"></i>
+                    Article saved to your bookmarks
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    
+    const toastElement = new bootstrap.Toast(toast.querySelector('.toast'));
+    toastElement.show();
+    
+    // Update the save button appearance
+    const saveBtn = document.getElementById('saveArticleBtn');
+    saveBtn.innerHTML = '<i class="fas fa-bookmark me-1"></i>Saved';
+    saveBtn.disabled = true;
+}
+
+// Share article function (placeholder)
+function shareArticle(articleId) {
+    // Get article info
+    const articleTitle = document.getElementById('articleDetailModalLabel').textContent;
+    const articleUrl = document.getElementById('readFullArticleBtn').href;
+    
+    // Create sharing options
+    const modalBody = document.createElement('div');
+    modalBody.innerHTML = `
+        <div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg" style="background-color: #232830; color: #E0E0E0; border-radius: 8px;">
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title">Share Article</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="shareUrlInput" class="form-label">Article URL</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="shareUrlInput" value="${articleUrl}" readonly style="background-color: #1C2025; color: #E0E0E0; border: 1px solid #3D5A80;">
+                                <button class="btn" style="background-color: #EE6C4D; color: white;" id="copyLinkBtn" type="button">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <p class="mb-2">Share via</p>
+                            <div class="d-flex gap-2">
+                                <button class="btn" style="background-color: #1877F2; color: white;">
+                                    <i class="fab fa-facebook-f"></i>
+                                </button>
+                                <button class="btn" style="background-color: #1DA1F2; color: white;">
+                                    <i class="fab fa-twitter"></i>
+                                </button>
+                                <button class="btn" style="background-color: #0A66C2; color: white;">
+                                    <i class="fab fa-linkedin-in"></i>
+                                </button>
+                                <button class="btn" style="background-color: #25D366; color: white;">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                                <button class="btn" style="background-color: #7289DA; color: white;">
+                                    <i class="fab fa-discord"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modalBody);
+    
+    // Initialize modal
+    const shareModal = new bootstrap.Modal(document.getElementById('shareModal'));
+    shareModal.show();
+    
+    // Handle copy button
+    document.getElementById('copyLinkBtn').addEventListener('click', function() {
+        const shareUrlInput = document.getElementById('shareUrlInput');
+        shareUrlInput.select();
+        document.execCommand('copy');
+        
+        this.innerHTML = '<i class="fas fa-check"></i>';
+        setTimeout(() => {
+            this.innerHTML = '<i class="fas fa-copy"></i>';
+        }, 2000);
+    });
+    
+    // Remove the modal from DOM when hidden
+    document.getElementById('shareModal').addEventListener('hidden.bs.modal', function() {
+        document.body.removeChild(modalBody);
+    });
+}
+    
+    // Record user interaction with an article
+    function recordInteraction(articleId, moduleId = null) {
+        const interactionData = {
+            user_id: demoUserId,
+            article_id: articleId,
+            type: 'view'
+        };
+        
+        if (moduleId) {
+            interactionData.module_id = moduleId;
+        }
+        
+        fetch('/api/interaction', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(interactionData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Interaction recorded:', data);
+        })
+        .catch(error => {
+            console.error('Error recording interaction:', error);
+        });
+    }
+    
+    // Load more articles
+    function loadMoreArticles() {
+        loadLatestArticles(currentCategory, false);
+    }
+    
+    // Show personalize modal
+    function showPersonalizeModal() {
+        const modal = new bootstrap.Modal(document.getElementById('personalizeModal'));
+        modal.show();
+    }
+    
+    // Save user preferences
+    function savePreferences() {
+        const selectedModules = [];
+        document.querySelectorAll('#personalizeModuleList input:checked').forEach(checkbox => {
+            selectedModules.push(checkbox.value);
+        });
+        
+        if (selectedModules.length === 0) {
+            alert('Please select at least one module');
+            return;
+        }
+        
+        // In a real app, this would save to the user profile in the database
+        // For demo purposes, we'll just show a success message and close the modal
+        alert('Preferences saved! Your recommendations will be updated.');
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('personalizeModal'));
+        modal.hide();
+        
+        // Reload the page to show personalized content
+        // In a real app, this would update content without a page reload
+        window.location.reload();
+    }
+    
+    // Scroll to trending section
+    function scrollToTrending(e) {
+        e.preventDefault();
+        document.querySelector('.card-header:has(>.fa-chart-line)').scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // Handle search
+    function handleSearch(e) {
+        e.preventDefault();
+        const searchInput = document.getElementById('searchInput');
+        if (!searchInput) return;
+        
+        const searchQuery = searchInput.value.trim();
+        
+        if (!searchQuery) {
+            return;
+        }
+        
+        // Clear current articles and show loading
+        const latestArticlesList = document.getElementById('latestArticlesList');
+        latestArticlesList.innerHTML = `
+            <div class="d-flex justify-content-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        `;
+        
+        // Update header
+        const headerTitle = document.querySelector('.card-header h5');
+        headerTitle.innerHTML = `<i class="fas fa-search me-2"></i>Search Results: "${searchQuery}"`;
+        
+        // Hide the category filter
+        const filter = document.getElementById('latestArticlesFilter');
+        if (filter) {
+            filter.style.display = 'none';
+        }
+        
+        // Fetch search results
+        fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=20`)
+            .then(response => response.json())
+            .then(data => {
+                latestArticlesList.innerHTML = '';
+                
+                if (data.articles && data.articles.length > 0) {
+                    data.articles.forEach(article => {
+                        const articleDate = new Date(article.published_at);
+                        const formattedDate = articleDate.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                        
+                        const articleItem = document.createElement('div');
+                        articleItem.className = 'card mb-4 border-0 shadow-sm article-card rounded-4 overflow-hidden';
+                        articleItem.setAttribute('data-article-id', article._id);
+                        
+                        let imageHtml = '';
+                        if (article.image_url) {
+                            imageHtml = `
+                                <div class="row g-0">
+                                    <div class="col-md-4">
+                                        <img src="${article.image_url}" class="img-fluid rounded-start h-100 object-fit-cover" alt="${article.title}">
+                                    </div>
+                                    <div class="col-md-8">
+                            `;
+                        }
+                        
+                        articleItem.innerHTML = `
+                            ${article.image_url ? imageHtml : '<div class="card-body p-4">'}
+                                <div class="card-body p-4">
+                                    <h5 class="card-title fw-bold mb-3">${article.title}</h5>
+                                    <p class="card-text text-secondary mb-3">${article.description || 'No description available.'}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <p class="card-text mb-0">
+                                            <small class="text-muted d-flex align-items-center">
+                                                <i class="fas fa-newspaper me-1"></i><span class="me-2">${article.source_name}</span>
+                                                <i class="far fa-calendar-alt me-1"></i><span>${formattedDate}</span>
+                                            </small>
+                                        </p>
+                                        <button class="btn btn-sm btn-primary rounded-pill view-article-btn">
+                                            <i class="fas fa-book-reader me-1"></i>Read More
+                                        </button>
+                                    </div>
+                                </div>
+                            ${article.image_url ? '</div></div>' : ''}
+                        `;
+                        
+                        // Add event listener to the Read More button
+                        articleItem.querySelector('.view-article-btn').addEventListener('click', function() {
+                            viewArticleDetails(article._id);
+                        });
+                        
+                        latestArticlesList.appendChild(articleItem);
+                    });
+                    
+                    // Hide "Load More" button
+                    const loadMoreBtn = document.getElementById('loadMoreArticlesBtn');
+                    if (loadMoreBtn) {
+                        loadMoreBtn.style.display = 'none';
+                    }
+                } else {
+                    latestArticlesList.innerHTML = `
+                        <div class="alert alert-info rounded-3 m-3">
+                            <i class="fas fa-info-circle me-2"></i>No articles found matching "${searchQuery}".
+                        </div>
+                    `;
+                    const loadMoreBtn = document.getElementById('loadMoreArticlesBtn');
+                    if (loadMoreBtn) {
+                        loadMoreBtn.style.display = 'none';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error searching articles:', error);
+                latestArticlesList.innerHTML = `
+                    <div class="alert alert-danger rounded-3 m-3">
+                        <i class="fas fa-exclamation-circle me-2"></i>Failed to search articles. Please try again later.
+                    </div>
+                `;
+                const loadMoreBtn = document.getElementById('loadMoreArticlesBtn');
+                if (loadMoreBtn) {
+                    loadMoreBtn.style.display = 'none';
+                }
+            });
+    }
+</script>
+
+<style>
+/* Custom styles for Syllabuzz - Modern Dark Theme */
+:root {
+  --accent-color: #EE6C4D;
+  --accent-dark: #D9522B;
+  --dark-accent: #293241;
+  --dark-accent-light: #3D5A80;
+  --light-color: #E0FBFC;
+  --secondary-color: #98C1D9;
+  --bg-color: #1C2025;
+  --card-bg: #232830;
+  --text-color: #E0E0E0;
+  --text-muted: #98A4B8;
+  --transition: all 0.25s ease;
+}
+
+body {
+  background-color: var(--bg-color);
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  color: var(--text-color);
+}
+
+/* Card styles */
+.card {
+  background-color: var(--card-bg);
+  border: none;
+  transition: var(--transition);
+  color: var(--text-color);
+}
+
+.card-body {
+  background-color: var(--card-bg);
+}
+
+.card-footer {
+  background-color: var(--card-bg) !important;
+}
+
+.hero-card {
+  background: linear-gradient(135deg, var(--dark-accent) 0%, var(--dark-accent-light) 100%);
+  margin-bottom: 2rem;
+}
+
+.hero-dots {
+  background-image: radial-gradient(var(--light-color) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.hero-image {
+  border-radius: 4px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.module-card, .article-list-card, .trending-section-card {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2) !important;
+}
+
+.module-item:not(:last-child) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.module-item:hover {
+  background-color: rgba(238, 108, 77, 0.1);
+}
+
+/* Button styles */
+.btn-accent {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: white;
+}
+
+.btn-accent:hover {
+  background-color: var(--accent-dark);
+  border-color: var(--accent-dark);
+  color: white;
+}
+
+.btn-outline-accent {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.btn-outline-accent:hover {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: white;
+}
+
+.btn-outline-secondary {
+  color: var(--secondary-color);
+  border-color: var(--secondary-color);
+}
+
+.btn-outline-secondary:hover {
+  background-color: var(--secondary-color);
+  border-color: var(--secondary-color);
+  color: var(--dark-accent);
+}
+
+/* Text colors */
+.text-accent {
+  color: var(--accent-color) !important;
+}
+
+.text-secondary {
+  color: var(--secondary-color) !important;
+}
+
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+.text-light {
+  color: var(--light-color) !important;
+}
+
+/* Background colors */
+.bg-accent {
+  background-color: var(--accent-color) !important;
+}
+
+.bg-dark-accent {
+  background-color: var(--dark-accent) !important;
+}
+
+.bg-secondary {
+  background-color: var(--secondary-color) !important;
+}
+
+/* Custom badges */
+.badge {
+  font-weight: 500;
+  padding: 0.5em 1em;
+}
+
+/* Trending card hover effect */
+.trending-card {
+  transition: var(--transition);
+  background-color: var(--card-bg);
+}
+
+.trending-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
+  border-bottom: 3px solid var(--accent-color);
+}
+
+/* Article cards */
+.article-card {
+  background-color: var(--card-bg);
+}
+
+.article-card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
+  border-left: 3px solid var(--accent-color);
+}
+
+/* Module checkbox styling */
+.custom-checkbox .form-check-input:checked {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+/* Animations for content loading */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.article-card, .trending-card, .module-item {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background-color: var(--bg-color);
+}
+
+::-webkit-scrollbar-track {
+  background: var(--dark-accent);
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-color);
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-dark);
+}
+
+/* Dropdown styling */
+.dropdown-menu {
+  background-color: var(--card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-item {
+  color: var(--text-color);
+}
+
+.dropdown-item:hover, .dropdown-item.active {
+  background-color: var(--dark-accent-light);
+  color: white;
+}
+
+/* Alert styling */
+.alert-info {
+  background-color: rgba(152, 193, 217, 0.2);
+  color: var(--secondary-color);
+  border: none;
+}
+
+.alert-danger {
+  background-color: rgba(238, 108, 77, 0.2);
+  color: var(--accent-color);
+  border: none;
+}
+
+/* Form elements */
+.form-check-input {
+  background-color: var(--dark-accent-light);
+  border-color: var(--secondary-color);
+}
+
+.form-check-input:checked {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+</style>
+<style>
+    /* Custom styles for Syllabuzz - Modern Dark Theme */
+:root {
+  --accent-color: #EE6C4D;
+  --accent-dark: #D9522B;
+  --dark-accent: #293241;
+  --dark-accent-light: #3D5A80;
+  --light-color: #E0FBFC;
+  --secondary-color: #EE6C4D; /* Changed from #98C1D9 to #EE6C4D */
+  --bg-color: #1C2025;
+  --card-bg: #232830;
+  --text-color: #E0E0E0;
+  --text-muted: #98A4B8;
+  --transition: all 0.25s ease;
+}
+
+body {
+  background-color: var(--bg-color);
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  color: var(--text-color);
+}
+
+/* Card styles */
+.card {
+  background-color: var(--card-bg);
+  border: none;
+  transition: var(--transition);
+  color: var(--text-color);
+}
+
+.card-body {
+  background-color: var(--card-bg);
+}
+
+.card-footer {
+  background-color: var(--card-bg) !important;
+}
+
+/* Reduced border radius */
+.card, .rounded-4, .btn, .alert, .hero-card, .module-card, 
+.article-list-card, .trending-section-card, .hero-image, 
+.trending-card, .article-card, .modal-content {
+  border-radius: 8px !important; /* Reduced from what appears to be 16px to 8px */
+}
+
+.btn-sm, .badge {
+  border-radius: 4px !important; /* Smaller border radius for smaller elements */
+}
+
+.hero-card {
+  background: linear-gradient(135deg, var(--dark-accent) 0%, var(--dark-accent-light) 100%);
+  margin-bottom: 2rem;
+}
+
+.hero-dots {
+  background-image: radial-gradient(var(--light-color) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.hero-image {
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.module-card, .article-list-card, .trending-section-card {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2) !important;
+}
+
+.module-item:not(:last-child) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.module-item:hover {
+  background-color: rgba(238, 108, 77, 0.1);
+}
+
+/* Button styles */
+.btn-accent {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: white;
+}
+
+.btn-accent:hover {
+  background-color: var(--accent-dark);
+  border-color: var(--accent-dark);
+  color: white;
+}
+
+.btn-outline-accent {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.btn-outline-accent:hover {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: white;
+}
+
+/* Changed from blue to orange */
+.btn-primary, .bg-primary, .btn-outline-primary, .text-primary {
+  background-color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+  color: white !important;
+}
+
+.btn-outline-primary {
+  background-color: transparent !important;
+  color: var(--accent-color) !important;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--accent-color) !important;
+  color: white !important;
+}
+
+.btn-outline-secondary {
+  color: var(--secondary-color);
+  border-color: var(--secondary-color);
+}
+
+.btn-outline-secondary:hover {
+  background-color: var(--secondary-color);
+  border-color: var(--secondary-color);
+  color: var(--dark-accent);
+}
+
+/* Text colors */
+.text-accent {
+  color: var(--accent-color) !important;
+}
+
+.text-secondary {
+  color: var(--secondary-color) !important;
+}
+
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+.text-light {
+  color: var(--light-color) !important;
+}
+
+/* Background colors */
+.bg-accent {
+  background-color: var(--accent-color) !important;
+}
+
+.bg-dark-accent {
+  background-color: var(--dark-accent) !important;
+}
+
+.bg-secondary {
+  background-color: var(--secondary-color) !important;
+}
+
+/* Custom badges */
+.badge {
+  font-weight: 500;
+  padding: 0.5em 1em;
+}
+
+/* Trending card hover effect */
+.trending-card {
+  transition: var(--transition);
+  background-color: var(--card-bg);
+}
+
+.trending-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
+  border-bottom: 3px solid var(--accent-color);
+}
+
+/* Article cards */
+.article-card {
+  background-color: var(--card-bg);
+}
+
+.article-card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
+  border-left: 3px solid var(--accent-color);
+}
+
+/* Module checkbox styling */
+.custom-checkbox .form-check-input:checked {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+/* Animations for content loading */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.article-card, .trending-card, .module-item {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background-color: var(--bg-color);
+}
+
+::-webkit-scrollbar-track {
+  background: var(--dark-accent);
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-color);
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-dark);
+}
+
+/* Dropdown styling */
+.dropdown-menu {
+  background-color: var(--card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-item {
+  color: var(--text-color);
+}
+
+.dropdown-item:hover, .dropdown-item.active {
+  background-color: var(--accent-color); /* Changed from dark-accent-light */
+  color: white;
+}
+
+/* Alert styling */
+.alert-info {
+  background-color: rgba(238, 108, 77, 0.2); /* Changed from blue to orange */
+  color: var(--secondary-color);
+  border: none;
+}
+
+.alert-danger {
+  background-color: rgba(238, 108, 77, 0.2);
+  color: var(--accent-color);
+  border: none;
+}
+
+/* Form elements */
+.form-check-input {
+  background-color: var(--dark-accent-light);
+  border-color: var(--secondary-color);
+}
+
+.form-check-input:checked {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+/* Make sure pills use the smaller border radius */
+.rounded-pill {
+  border-radius: 4px !important; /* Changed from pill to small rounded corners */
+}
+
+
+</style>
+
+{% endblock %}Modal

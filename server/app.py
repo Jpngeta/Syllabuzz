@@ -6,6 +6,13 @@ from datetime import datetime
 from bson.objectid import ObjectId
 import threading
 
+# Option 1: Set specific allowed origins
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5174", "http://localhost:3000"]}})
+
+
 # Import services
 from services.news_service import NewsAPIClientService
 from services.article_service import ArticleService

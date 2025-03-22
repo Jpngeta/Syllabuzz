@@ -15,7 +15,7 @@ class RecommendationService:
         self.embedding_service = embedding_service
         logger.info("Initialized recommendation service")
 
-    def get_module_recommendations(self, module_id, limit=10):
+    def get_module_recommendations(self, module_id, limit=20):
     #Get combined article and paper recommendations for a specific module
         try:
             # Ensure module_id is ObjectId
