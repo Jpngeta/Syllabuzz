@@ -25,7 +25,6 @@ from services.arXiv_service import ArxivService
 from utils.db_utils import initialize_database, modules_collection, articles_collection, relevance_collection, users_collection
 
 # Import blueprints
-from routes.auth_routes import auth
 from routes.auth_api_routes import auth_api
 
 # Import configuration
@@ -36,7 +35,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Initialize Flask app
-app = Flask(__name__)
+
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config['DEBUG'] = DEBUG
 
@@ -81,18 +80,17 @@ def setup():
         logger.info("Database initialized")
         
         # Start scheduler in a separate thread
-        start_scheduler_thread()
+        # start_scheduler_thread()
         
         logger.info("Application setup complete")
     except Exception as e:
         logger.error(f"Error during setup: {str(e)}")
 
 # Register blueprints
-app.register_blueprint(auth)
 app.register_blueprint(auth_api)
 
-# Pass recommendation service to auth_api blueprint
-auth_api.recommendation_service = recommendation_service
+import routes.auth_api_routes as auth_routes
+auth_routes.recommendation_service = recommendation_service
 
 # Web Routes
 @app.route('/')

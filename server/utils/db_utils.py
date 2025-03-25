@@ -1,5 +1,6 @@
 # Database utilities with user authentication
 import pymongo
+from bson.objectid import ObjectId  # Add this import
 from datetime import datetime
 from config import MONGO_URI, MONGO_DB_NAME
 
@@ -125,7 +126,7 @@ def find_user_by_username(username):
 def find_user_by_id(user_id):
     """Find a user by ID"""
     if isinstance(user_id, str):
-        user_id = pymongo.ObjectId(user_id)
+        user_id = ObjectId(user_id)  # Changed from pymongo.ObjectId to ObjectId
     return users_collection.find_one({"_id": user_id})
 
 def create_user(username, email, password_hash):
@@ -150,7 +151,7 @@ def create_user(username, email, password_hash):
 def verify_user(user_id):
     """Mark a user as verified"""
     if isinstance(user_id, str):
-        user_id = pymongo.ObjectId(user_id)
+        user_id = ObjectId(user_id)  # Changed from pymongo.ObjectId to ObjectId
         
     result = users_collection.update_one(
         {"_id": user_id},
@@ -167,7 +168,7 @@ def verify_user(user_id):
 def update_user_password(user_id, password_hash):
     """Update a user's password"""
     if isinstance(user_id, str):
-        user_id = pymongo.ObjectId(user_id)
+        user_id = ObjectId(user_id)  # Changed from pymongo.ObjectId to ObjectId
         
     result = users_collection.update_one(
         {"_id": user_id},
@@ -184,7 +185,7 @@ def update_user_password(user_id, password_hash):
 def create_token(user_id, token_type, token, expires_at):
     """Create a new token (verification, password reset, etc.)"""
     if isinstance(user_id, str):
-        user_id = pymongo.ObjectId(user_id)
+        user_id = ObjectId(user_id)  # Changed from pymongo.ObjectId to ObjectId
         
     token_doc = {
         "user_id": user_id,
@@ -210,7 +211,7 @@ def find_token(token, token_type=None):
 def mark_token_used(token_id):
     """Mark a token as used"""
     if isinstance(token_id, str):
-        token_id = pymongo.ObjectId(token_id)
+        token_id = ObjectId(token_id)  # Changed from pymongo.ObjectId to ObjectId
         
     result = tokens_collection.update_one(
         {"_id": token_id},
@@ -222,13 +223,13 @@ def mark_token_used(token_id):
 def update_user_modules(user_id, modules):
     """Update a user's enrolled modules"""
     if isinstance(user_id, str):
-        user_id = pymongo.ObjectId(user_id)
+        user_id = ObjectId(user_id)  # Changed from pymongo.ObjectId to ObjectId
         
     # Convert module IDs to ObjectId if they're strings
     module_ids = []
     for module_id in modules:
         if isinstance(module_id, str):
-            module_ids.append(pymongo.ObjectId(module_id))
+            module_ids.append(ObjectId(module_id))  # Changed from pymongo.ObjectId to ObjectId
         else:
             module_ids.append(module_id)
     
@@ -247,7 +248,7 @@ def update_user_modules(user_id, modules):
 def update_user_preferences(user_id, preferences):
     """Update a user's preferences"""
     if isinstance(user_id, str):
-        user_id = pymongo.ObjectId(user_id)
+        user_id = ObjectId(user_id)  # Changed from pymongo.ObjectId to ObjectId
         
     result = users_collection.update_one(
         {"_id": user_id},
@@ -264,13 +265,13 @@ def update_user_preferences(user_id, preferences):
 def bookmark_article(user_id, article_id, module_id=None):
     """Add an article to user's bookmarks"""
     if isinstance(user_id, str):
-        user_id = pymongo.ObjectId(user_id)
+        user_id = ObjectId(user_id)  # Changed from pymongo.ObjectId to ObjectId
         
     if isinstance(article_id, str):
-        article_id = pymongo.ObjectId(article_id)
+        article_id = ObjectId(article_id)  # Changed from pymongo.ObjectId to ObjectId
         
     if module_id and isinstance(module_id, str):
-        module_id = pymongo.ObjectId(module_id)
+        module_id = ObjectId(module_id)  # Changed from pymongo.ObjectId to ObjectId
     
     bookmark = {
         "user_id": user_id,
@@ -291,10 +292,10 @@ def bookmark_article(user_id, article_id, module_id=None):
 def remove_bookmark(user_id, article_id):
     """Remove an article from user's bookmarks"""
     if isinstance(user_id, str):
-        user_id = pymongo.ObjectId(user_id)
+        user_id = ObjectId(user_id)  # Changed from pymongo.ObjectId to ObjectId
         
     if isinstance(article_id, str):
-        article_id = pymongo.ObjectId(article_id)
+        article_id = ObjectId(article_id)  # Changed from pymongo.ObjectId to ObjectId
     
     result = bookmarks_collection.delete_one({
         "user_id": user_id,
@@ -306,7 +307,7 @@ def remove_bookmark(user_id, article_id):
 def get_user_bookmarks(user_id, limit=20, skip=0):
     """Get bookmarks for a user"""
     if isinstance(user_id, str):
-        user_id = pymongo.ObjectId(user_id)
+        user_id = ObjectId(user_id)  # Changed from pymongo.ObjectId to ObjectId
     
     pipeline = [
         {"$match": {"user_id": user_id}},
@@ -335,6 +336,21 @@ def get_user_bookmarks(user_id, limit=20, skip=0):
         bookmark["bookmark_id"] = str(bookmark["bookmark_id"])
     
     return bookmarks
+
+def is_article_bookmarked(user_id, article_id):
+    """Check if an article is bookmarked by a user"""
+    if isinstance(user_id, str):
+        user_id = ObjectId(user_id)  # Changed from pymongo.ObjectId to ObjectId
+        
+    if isinstance(article_id, str):
+        article_id = ObjectId(article_id)  # Changed from pymongo.ObjectId to ObjectId
+    
+    bookmark = bookmarks_collection.find_one({
+        "user_id": user_id,
+        "article_id": article_id
+    })
+    
+    return bookmark is not None
 
 def initialize_database():
     """Initialize the database with required data"""
