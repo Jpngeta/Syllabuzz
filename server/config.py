@@ -30,6 +30,13 @@ TOKEN_EXPIRY_HOURS = 48  # Email verification token expiry time
 PASSWORD_RESET_EXPIRY_HOURS = 24  # Password reset token expiry time
 SESSION_EXPIRY_DAYS = 30  # Remember me session expiry time
 
+# JWT Authentication settings
+JWT_EXPIRY_HOURS = int(os.environ.get('JWT_EXPIRY_HOURS', 24))  # JWT token expiry time
+JWT_ALGORITHM = 'HS256'
+JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', SECRET_KEY)  # Use same key as app or separate one
+JWT_ACCESS_TOKEN_EXPIRES = JWT_EXPIRY_HOURS * 3600  # In seconds
+JWT_REFRESH_TOKEN_EXPIRES = SESSION_EXPIRY_DAYS * 24 * 3600  # In seconds
+
 # Email configuration
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
@@ -83,3 +90,15 @@ MIN_ARTICLES_PER_CATEGORY = 50
 
 # Batch processing limits for embedding updates
 EMBEDDING_BATCH_SIZE = 500
+
+# API Paths
+API_PREFIX = '/api'
+AUTH_API_PREFIX = '/api/auth'
+
+# Cookie settings for JWT
+JWT_COOKIE_SECURE = os.environ.get('JWT_COOKIE_SECURE', 'False').lower() == 'true'  # Set to True in production with HTTPS
+JWT_COOKIE_HTTPONLY = True
+JWT_COOKIE_SAMESITE = 'Lax'  # Prevents CSRF, adjust based on your needs
+
+# CORS settings
+CORS_ORIGINS = os.environ.get('CORS_ORIGINS', 'http://localhost:5173,http://localhost:3000').split(',')
