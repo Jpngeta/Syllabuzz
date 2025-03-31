@@ -48,6 +48,7 @@ const MainContent: React.FC<MainContentProps> = ({
   currentModule,
   moduleRecommendations,
   isLoading,
+  onModuleStarToggle,
   loadModuleDetails,
   darkColors
 }) => {
@@ -332,6 +333,7 @@ const MainContent: React.FC<MainContentProps> = ({
                           <ModuleCard 
                             module={module} 
                             onClick={loadModuleDetails}
+                            onStarToggle={onModuleStarToggle}
                           />
                         </div>
                       ))}
