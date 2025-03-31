@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Code, 
   Newspaper, 
   TrendingUp, 
   Search, 
+  Search as SearchIcon,
   Star, 
   BookOpen,
   Sparkles,
@@ -17,7 +18,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ArticleCard from '../layout/ArticleCard';
 import ModuleCard from './ModuleCard';
+import ModuleSearch from './ModuleSearch';
 import BookmarkList from './BookmarkList';
+import { Module } from './types';
 import { MainContentProps } from './types';
 import { formatDate } from '../../services/apiService';
 
@@ -239,44 +242,105 @@ const MainContent: React.FC<MainContentProps> = ({
           );
           
           // Render modules tab content
-          const renderModulesContent = () => (
-          <FadeIn>
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold title-font" style={{ color: darkColors.primary }}>CS Modules</h2>
-              </div>
+          const renderModulesContent = () => {
+            const [searchQuery, setSearchQuery] = useState<string>('');
+            const [filteredModules, setFilteredModules] = useState<Module[]>(modules);
+            
+            // Filter modules when search query changes
+            useEffect(() => {
+              if (!searchQuery.trim()) {
+                setFilteredModules(modules);
+                return;
+              }
               
-              {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[...Array(6)].map((_, i) => (
-                    <Card key={i} className="h-full" style={{ backgroundColor: darkColors.surface }}>
-                      <CardHeader>
-                        <Skeleton className="h-6 w-full mb-2" style={{ backgroundColor: `${darkColors.textSecondary}40` }} />
-                      </CardHeader>
-                      <CardContent>
-                        <Skeleton className="h-20 w-full" style={{ backgroundColor: `${darkColors.textSecondary}40` }} />
-                      </CardContent>
-                      <CardFooter>
-                        <Skeleton className="h-4 w-24" style={{ backgroundColor: `${darkColors.textSecondary}40` }} />
-                      </CardFooter>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {modules.map((module, index) => (
-                    <div key={module._id} className="animate-fadeIn" style={{ animationDelay: `${index * 0.1}s` }}>
-                      <ModuleCard 
-                        module={module} 
-                        onClick={loadModuleDetails} 
-                      />
+              const query = searchQuery.toLowerCase();
+              const filtered = modules.filter(module => 
+                module.name.toLowerCase().includes(query) || 
+                module.code.toLowerCase().includes(query)
+              );
+              
+              setFilteredModules(filtered);
+            }, [searchQuery, modules]);
+            
+            // Handle search input
+            const handleSearch = (query: string) => {
+              setSearchQuery(query);
+            };
+            
+            return (
+              <FadeIn>
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold title-font" style={{ color: darkColors.primary }}>CS Modules</h2>
+                  </div>
+                  
+                  {/* Add the search component */}
+                  <ModuleSearch 
+                    onSearch={handleSearch}
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    darkColors={darkColors}
+                  />
+                  
+                  {/* Show search results count when searching */}
+                  {searchQuery && (
+                    <div className="mb-4 flex items-center" style={{ color: darkColors.textSecondary }}>
+                      <Search className="w-4 h-4 mr-2" />
+                      <p className="text-sm">
+                        Found <span className="font-bold">{filteredModules.length}</span> modules 
+                        matching "<span className="font-bold">{searchQuery}</span>"
+                      </p>
                     </div>
-                  ))}
+                  )}
+                  
+                  {isLoading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {[...Array(6)].map((_, i) => (
+                        <Card key={i} className="h-full" style={{ backgroundColor: darkColors.surface }}>
+                          <CardHeader>
+                            <Skeleton className="h-6 w-full mb-2" style={{ backgroundColor: `${darkColors.textSecondary}40` }} />
+                          </CardHeader>
+                          <CardContent>
+                            <Skeleton className="h-20 w-full" style={{ backgroundColor: `${darkColors.textSecondary}40` }} />
+                          </CardContent>
+                          <CardFooter>
+                            <Skeleton className="h-4 w-24" style={{ backgroundColor: `${darkColors.textSecondary}40` }} />
+                          </CardFooter>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : filteredModules.length === 0 ? (
+                    <div className="text-center py-12 border rounded-lg bg-gray-50">
+                      <SearchIcon className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                      <h3 className="text-xl font-medium mb-2">No Modules Found</h3>
+                      <p className="text-gray-500 mb-4">
+                        No modules match your search criteria. Try a different search term.
+                      </p>
+                      <Button
+                        variant="outline"
+                        onClick={() => setSearchQuery('')}
+                        className="mt-2"
+                        style={{ borderColor: darkColors.primary, color: darkColors.primary }}
+                      >
+                        Clear Search
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {filteredModules.map((module, index) => (
+                        <div key={module._id} className="animate-fadeIn" style={{ animationDelay: `${index * 0.1}s` }}>
+                          <ModuleCard 
+                            module={module} 
+                            onClick={loadModuleDetails}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </FadeIn>
-          );
+              </FadeIn>
+            );
+          };
           
           // Render articles tab content
           const renderArticlesContent = () => (
