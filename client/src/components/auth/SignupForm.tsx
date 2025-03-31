@@ -24,7 +24,6 @@ const SignupForm: React.FC = () => {
     password: '',
     confirmPassword: '',
   });
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
   
@@ -101,11 +100,6 @@ const SignupForm: React.FC = () => {
     // Validate password confirmation
     if (formData.password !== formData.confirmPassword) {
       errors.confirmPassword = 'Passwords do not match';
-    }
-    
-    // Validate terms agreement
-    if (!agreedToTerms) {
-      errors.terms = 'You must agree to the terms and conditions';
     }
     
     setFormErrors(errors);
@@ -284,34 +278,6 @@ const SignupForm: React.FC = () => {
                 <p className="text-xs mt-1" style={{ color: '#FF5252' }}>{formErrors.confirmPassword}</p>
               )}
             </div>
-
-            <div className="flex items-center space-x-2">
-              <input 
-                id="terms" 
-                type="checkbox"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300"
-                style={{ accentColor: darkColors.primary }}
-              />
-              <label
-                htmlFor="terms"
-                className="text-sm font-medium"
-                style={{ color: formErrors.terms ? '#FF5252' : darkColors.textSecondary }}
-              >
-                I agree to the{" "}
-                <Link to="/terms" className="hover:underline" style={{ color: darkColors.primary }}>
-                  terms of service
-                </Link>
-                {" "}and{" "}
-                <Link to="/privacy" className="hover:underline" style={{ color: darkColors.primary }}>
-                  privacy policy
-                </Link>
-              </label>
-            </div>
-            {formErrors.terms && (
-              <p className="text-xs mt-1" style={{ color: '#FF5252' }}>{formErrors.terms}</p>
-            )}
 
             <button
               type="submit"
