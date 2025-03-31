@@ -19,7 +19,7 @@ class ArticleService:
     def fetch_articles(self, category=None, count=20, page=1):
         """Fetch articles from NewsAPI"""
         try:
-            url = "https://newsapi.org/v2/top-headlines"
+            url = "https://newsapi.org/v2/everything"
             
             # Prepare parameters
             params = {
