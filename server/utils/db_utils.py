@@ -129,12 +129,13 @@ def find_user_by_id(user_id):
         user_id = ObjectId(user_id)  # Changed from pymongo.ObjectId to ObjectId
     return users_collection.find_one({"_id": user_id})
 
-def create_user(username, email, password_hash):
+def create_user(username, email, password_hash, name=None):
     """Create a new user"""
     user = {
         "username": username,
         "email": email,
         "password": password_hash,
+        "name": name, 
         "is_verified": False,
         "modules": [],
         "preferences": {
