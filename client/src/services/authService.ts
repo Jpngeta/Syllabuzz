@@ -210,6 +210,58 @@ export const authService = {
     }
   },
 
+  // =========== Module Starring Methods ===========
+
+  // Star a module
+  starModule: async (moduleId: string) => {
+    try {
+      const response = await api.post('/auth/star-module', { module_id: moduleId });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(error.response.data.message || 'Failed to star module');
+      }
+      throw new Error('Failed to star module. Please check your connection.');
+    }
+  },
+
+  // Unstar a module
+  unstarModule: async (moduleId: string) => {
+    try {
+      const response = await api.delete(`/auth/star-module/${moduleId}`);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(error.response.data.message || 'Failed to unstar module');
+      }
+      throw new Error('Failed to unstar module. Please check your connection.');
+    }
+  },
+
+  // Get all starred modules
+  getStarredModules: async () => {
+    try {
+      const response = await api.get('/auth/starred-modules');
+      return response.data.modules;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(error.response.data.message || 'Failed to get starred modules');
+      }
+      throw new Error('Failed to get starred modules. Please check your connection.');
+    }
+  },
+
+  // Check if a module is starred
+  isModuleStarred: async (moduleId: string) => {
+    try {
+      const response = await api.get(`/auth/star-module/${moduleId}/status`);
+      return response.data.isStarred;
+    } catch (error) {
+      // If there's an error, assume it's not starred
+      return false;
+    }
+  },
+
   // Check if the user is authenticated
   isAuthenticated: () => {
     return localStorage.getItem('auth_token') !== null;
