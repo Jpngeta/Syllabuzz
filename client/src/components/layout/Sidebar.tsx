@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Home, 
   Code, 
   Newspaper, 
   TrendingUp, 
-  Bookmark 
+  Bookmark,
+  Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { SidebarProps } from '../base/types';
+import { authService } from '../../services/authService';
+import { Module } from '../base/types';
 
 const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
@@ -20,8 +23,44 @@ const Sidebar: React.FC<SidebarProps> = ({
   setIsMenuOpen,
   fetchTrending,
   user,
-  darkColors
+  darkColors,
+  refreshStarredModules
 }) => {
+  const [starredModules, setStarredModules] = useState<Module[]>([]);
+  const [isLoadingStarred, setIsLoadingStarred] = useState(false);
+
+  // Function to fetch starred modules
+  const fetchStarredModules = async () => {
+    if (user) {
+      setIsLoadingStarred(true);
+      try {
+        const starred = await authService.getStarredModules();
+        setStarredModules(starred);
+      } catch (error) {
+        console.error('Error fetching starred modules:', error);
+        setStarredModules([]);
+      } finally {
+        setIsLoadingStarred(false);
+      }
+    } else {
+      setStarredModules([]);
+    }
+  };
+
+  // Fetch starred modules when the component mounts or when refreshStarredModules is called
+  useEffect(() => {
+    fetchStarredModules();
+  }, [user, refreshStarredModules]);
+  
+  // Expose the refresh function for parent components
+  useEffect(() => {
+    // If the parent component provided a refreshStarredModules function,
+    // assign our fetchStarredModules function to it
+    if (typeof refreshStarredModules === 'function') {
+      refreshStarredModules = fetchStarredModules;
+    }
+  }, [refreshStarredModules]);
+
   // Mobile menu
   const MobileMenu = () => (
     isMenuOpen && (
@@ -167,19 +206,33 @@ const Sidebar: React.FC<SidebarProps> = ({
           boxShadow: '0 4px 6px rgba(0, 0, 0, 0.2)'
         }}
       >
-        <h3 className="font-bold mb-2 title-font" style={{ color: darkColors.primary }}>Modules</h3>
+        <h3 className="font-bold mb-2 title-font flex items-center" style={{ color: darkColors.primary }}>
+          <Star className="w-4 h-4 mr-2" fill={darkColors.primary} /> My Modules
+        </h3>
         <div className="space-y-1 overflow-auto" style={{ maxHeight: '30rem', maxWidth: '100%' }}>
-          {modules.map((module) => (
-            <Button 
-              key={module._id} 
-              variant="ghost" 
-              className="w-full justify-start transition-colors font-medium"
-              onClick={() => loadModuleDetails(module._id)}
-              style={{ color: darkColors.textPrimary }}
-            >
-              {module.code} - {module.name}
-            </Button>
-          ))}               
+          {isLoadingStarred ? (
+            <div className="flex justify-center py-4">
+              <div className="animate-spin h-5 w-5 border-2 border-t-transparent rounded-full" 
+                   style={{ borderColor: darkColors.primary, borderTopColor: 'transparent' }}>
+              </div>
+            </div>
+          ) : starredModules.length > 0 ? (
+            starredModules.map((module) => (
+              <Button 
+                key={module._id} 
+                variant="ghost" 
+                className="w-full justify-start transition-colors font-medium"
+                onClick={() => loadModuleDetails(module._id)}
+                style={{ color: darkColors.textPrimary }}
+              >
+                {module.code} - {module.name}
+              </Button>
+            ))
+          ) : (
+            <p className="text-sm text-center py-2" style={{ color: darkColors.textSecondary }}>
+              No starred modules yet.
+            </p>
+          )}
         </div>
       </div>
     </aside>
