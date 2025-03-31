@@ -99,7 +99,7 @@ def signup():
     
     # Create user
     try:
-        user_id = create_user(username, email, password_hash)
+        user_id = create_user(username, email, password_hash, name)
         
         return jsonify({
             'message': 'User registered successfully',
@@ -112,7 +112,6 @@ def signup():
 def login():
     """Login a user"""
     data = request.json
-    print(data)
     
     # Validate required fields
     if not data or not data.get('email') or not data.get('password'):
@@ -120,8 +119,6 @@ def login():
         
     email = data.get('email').lower().strip()
     password = data.get('password')
-
-    print(email, password)
     
     # Find user by email
     user = find_user_by_email(email)
@@ -138,7 +135,8 @@ def login():
     # Prepare user data for response
     user_data = {
         'id': str(user['_id']),
-        'name': user.get('username', ''),
+        'name': user.get('name', ''),  # Include name field, default to empty string if not present
+        'username': user.get('username', ''),  # Include username
         'email': user['email'],
         'modules': [str(module) for module in user.get('modules', [])]
     }
