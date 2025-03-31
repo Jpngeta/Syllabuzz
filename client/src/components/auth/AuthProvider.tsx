@@ -72,7 +72,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
-
+  
     try {
       const data = await authService.login(email, password);
       
@@ -83,10 +83,12 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         setUser(data.user);
       }
       
-      navigate('/'); // Navigate to home page
+      // We don't navigate here anymore - let the component handle that
+      // This prevents form resets when errors occur
+      return data; // Return data so the component knows login was successful
     } catch (err: any) {
       setError(err.message || 'Login failed');
-      throw err;
+      throw err; // Re-throw to let component know login failed
     } finally {
       setIsLoading(false);
     }

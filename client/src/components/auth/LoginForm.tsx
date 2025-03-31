@@ -20,7 +20,6 @@ const darkColors = {
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   
   const { login, isLoading, error } = useAuth();
@@ -44,10 +43,13 @@ const LoginForm: React.FC = () => {
     
     try {
       await login(email, password);
-      navigate(redirect); // Navigate to the redirect URL or home
+      // Only navigate on success
+      navigate(redirect);
     } catch (err) {
-      // Error is handled in the AuthProvider
+      // Error is already handled in the AuthProvider
+      // We're just preventing the form reset by not doing anything here
       console.error('Login error:', err);
+      // Values of email and password state will be preserved
     }
   };
 
@@ -147,20 +149,6 @@ const LoginForm: React.FC = () => {
                   required
                 />
               </div>
-            </div>
-
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                style={{ color: darkColors.primary }}
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm" style={{ color: darkColors.textSecondary }}>
-                Remember me
-              </label>
             </div>
 
             <button

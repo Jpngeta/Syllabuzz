@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { 
   BookOpen, 
   Search, 
@@ -15,7 +15,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
 
 const Header: React.FC<HeaderProps> = ({
@@ -92,15 +93,19 @@ const Header: React.FC<HeaderProps> = ({
                   <div className="flex items-center gap-2 cursor-pointer">
                     <Avatar className="border-2" style={{ borderColor: darkColors.primary }}>
                       <AvatarFallback style={{ backgroundColor: darkColors.primary, color: darkColors.textPrimary }}>
-                        {user?.username?.charAt(0) || user?.name?.charAt(0) || 'U'}
+                        {user?.name?.charAt(0) || user?.username?.charAt(0) || 'U'}
                       </AvatarFallback>
                     </Avatar>
                     <span className="font-medium" style={{ color: darkColors.textPrimary }}>
-                      {user?.username || user?.name || 'User'}
+                      {user?.name || user?.username || 'User'}
                     </span>
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem className="opacity-70 cursor-default">
+                    <span className="text-xs">{user?.email}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                     <LogOut className="w-4 h-4 mr-2" />
                     <span>Logout</span>
