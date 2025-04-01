@@ -14,6 +14,7 @@ modules_collection = db.modules
 relevance_collection = db.module_article_relevance
 users_collection = db.users
 bookmarks_collection = db.bookmarks
+starred_modules_collection = db.starred_modules  # New collection for starred modules
 interactions_collection = db.interactions
 tokens_collection = db.tokens
 
@@ -111,6 +112,12 @@ def create_indexes():
     bookmarks_collection.create_index([
         ("user_id", pymongo.ASCENDING),
         ("article_id", pymongo.ASCENDING)
+    ], unique=True)
+    
+    # Starred modules indexes
+    starred_modules_collection.create_index([
+        ("user_id", pymongo.ASCENDING),
+        ("module_id", pymongo.ASCENDING)
     ], unique=True)
     
     print("Created database indexes")
@@ -352,6 +359,90 @@ def is_article_bookmarked(user_id, article_id):
     })
     
     return bookmark is not None
+
+# =========== Module Starring Functions ===========
+
+def star_module(user_id, module_id):
+    """Add a module to user's starred modules"""
+    if isinstance(user_id, str):
+        user_id = ObjectId(user_id)
+        
+    if isinstance(module_id, str):
+        module_id = ObjectId(module_id)
+    
+    # Check if module exists
+    module = modules_collection.find_one({"_id": module_id})
+    if not module:
+        return None
+    
+    starred = {
+        "user_id": user_id,
+        "module_id": module_id,
+        "created_at": datetime.now()
+    }
+    
+    try:
+        result = starred_modules_collection.insert_one(starred)
+        return result.inserted_id
+    except pymongo.errors.DuplicateKeyError:
+        # Already starred
+        return None
+
+def unstar_module(user_id, module_id):
+    """Remove a module from user's starred modules"""
+    if isinstance(user_id, str):
+        user_id = ObjectId(user_id)
+        
+    if isinstance(module_id, str):
+        module_id = ObjectId(module_id)
+    
+    result = starred_modules_collection.delete_one({
+        "user_id": user_id,
+        "module_id": module_id
+    })
+    
+    return result.deleted_count > 0
+
+def get_starred_modules(user_id):
+    """Get starred modules for a user"""
+    if isinstance(user_id, str):
+        user_id = ObjectId(user_id)
+    
+    pipeline = [
+        {"$match": {"user_id": user_id}},
+        {"$sort": {"created_at": -1}},
+        {"$lookup": {
+            "from": "modules",
+            "localField": "module_id",
+            "foreignField": "_id",
+            "as": "module"
+        }},
+        {"$unwind": "$module"},
+        {"$replaceRoot": { "newRoot": "$module" }}
+    ]
+    
+    modules = list(starred_modules_collection.aggregate(pipeline))
+    
+    # Convert ObjectIds to strings for JSON serialization
+    for module in modules:
+        module["_id"] = str(module["_id"])
+    
+    return modules
+
+def is_module_starred(user_id, module_id):
+    """Check if a module is starred by a user"""
+    if isinstance(user_id, str):
+        user_id = ObjectId(user_id)
+        
+    if isinstance(module_id, str):
+        module_id = ObjectId(module_id)
+    
+    starred = starred_modules_collection.find_one({
+        "user_id": user_id,
+        "module_id": module_id
+    })
+    
+    return starred is not None
 
 def initialize_database():
     """Initialize the database with required data"""

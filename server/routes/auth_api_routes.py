@@ -15,7 +15,11 @@ from utils.db_utils import (
     bookmark_article,
     remove_bookmark,
     get_user_bookmarks,
-    is_article_bookmarked
+    is_article_bookmarked,
+    star_module,
+    unstar_module,
+    get_starred_modules,
+    is_module_starred
 )
 from config import SECRET_KEY, JWT_EXPIRY_HOURS
 
@@ -404,3 +408,92 @@ def check_bookmark_status(article_id):
     is_bookmarked = is_article_bookmarked(user_id, article_id)
     
     return jsonify({'isBookmarked': is_bookmarked}), 200
+
+# =========== Module Starring Routes ===========
+
+@auth_api.route('/api/auth/star-module', methods=['POST'])
+def star_module_route():
+    """Star a module"""
+    auth_header = request.headers.get('Authorization')
+    
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({'message': 'Authentication required'}), 401
+        
+    token = auth_header.split(' ')[1]
+    user_id = validate_jwt_token(token)
+    
+    if not user_id:
+        return jsonify({'message': 'Invalid or expired token'}), 401
+        
+    data = request.json
+    
+    # Validate required fields
+    if not data or not data.get('module_id'):
+        return jsonify({'message': 'Module ID is required'}), 400
+        
+    module_id = data.get('module_id')
+    
+    # Star the module
+    result = star_module(user_id, module_id)
+    
+    if result is not None:
+        return jsonify({'message': 'Module starred successfully'}), 200
+    else:
+        return jsonify({'message': 'Module already starred'}), 200
+
+@auth_api.route('/api/auth/star-module/<module_id>', methods=['DELETE'])
+def unstar_module_route(module_id):
+    """Unstar a module"""
+    auth_header = request.headers.get('Authorization')
+    
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({'message': 'Authentication required'}), 401
+        
+    token = auth_header.split(' ')[1]
+    user_id = validate_jwt_token(token)
+    
+    if not user_id:
+        return jsonify({'message': 'Invalid or expired token'}), 401
+    
+    result = unstar_module(user_id, module_id)
+    
+    if result:
+        return jsonify({'message': 'Module unstarred successfully'}), 200
+    else:
+        return jsonify({'message': 'Starred module not found'}), 404
+
+@auth_api.route('/api/auth/starred-modules', methods=['GET'])
+def get_starred_modules_route():
+    """Get user's starred modules"""
+    auth_header = request.headers.get('Authorization')
+    
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({'message': 'Authentication required'}), 401
+        
+    token = auth_header.split(' ')[1]
+    user_id = validate_jwt_token(token)
+    
+    if not user_id:
+        return jsonify({'message': 'Invalid or expired token'}), 401
+    
+    modules = get_starred_modules(user_id)
+    
+    return jsonify({'modules': modules}), 200
+
+@auth_api.route('/api/auth/star-module/<module_id>/status', methods=['GET'])
+def check_module_star_status(module_id):
+    """Check if a module is starred by the current user"""
+    auth_header = request.headers.get('Authorization')
+    
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({'message': 'Authentication required'}), 401
+        
+    token = auth_header.split(' ')[1]
+    user_id = validate_jwt_token(token)
+    
+    if not user_id:
+        return jsonify({'message': 'Invalid or expired token'}), 401
+    
+    is_starred = is_module_starred(user_id, module_id)
+    
+    return jsonify({'isStarred': is_starred}), 200

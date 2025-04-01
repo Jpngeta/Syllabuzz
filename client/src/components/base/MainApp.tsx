@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   BookOpen,
   Menu,
@@ -53,6 +53,9 @@ const App: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   
   const { user } = useAuth();
+  
+  // Reference to refresh starred modules function
+  const refreshStarredModulesRef = useRef<(() => void) | null>(null);
   
   // Fetch initial data
   useEffect(() => {
@@ -205,6 +208,19 @@ const App: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  // Handler for module star toggle
+  const handleModuleStarToggle = (moduleId: string, isStarred: boolean) => {
+    // Refresh the starred modules in the sidebar
+    if (refreshStarredModulesRef.current) {
+      refreshStarredModulesRef.current();
+    }
+  };
+  
+  // Function to set the refreshStarredModules reference
+  const setRefreshStarredModules = (refreshFn: () => void) => {
+    refreshStarredModulesRef.current = refreshFn;
+  };
   
   return (
     <div className="flex flex-col min-h-screen" style={{ backgroundColor: darkColors.background }}>
@@ -230,6 +246,7 @@ const App: React.FC = () => {
             fetchTrending={fetchTrending}
             user={user}
             darkColors={darkColors}
+            refreshStarredModules={setRefreshStarredModules}
           />
           
           <MainContent 
@@ -246,6 +263,7 @@ const App: React.FC = () => {
             isLoading={isLoading}
             loadModuleDetails={loadModuleDetails}
             darkColors={darkColors}
+            onModuleStarToggle={handleModuleStarToggle}
           />
         </div>
       </main>
