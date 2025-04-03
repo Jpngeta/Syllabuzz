@@ -92,7 +92,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ module, onClick, onStarToggle }
         className="h-full border hover:shadow-lg cursor-pointer transition-all duration-300" 
         onClick={() => onClick(module._id)}
         style={{ 
-          backgroundColor: isStarred ? darkColors.quaternary + '20' : darkColors.surface, // Light purple background if starred
+          backgroundColor: isStarred ? darkColors.quaternary + '33' : darkColors.surface, // Light purple background if starred
           borderColor: darkColors.primary, 
           borderLeftWidth: '4px' 
         }}
