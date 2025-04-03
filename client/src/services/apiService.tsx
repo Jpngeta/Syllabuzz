@@ -28,6 +28,17 @@ export const fetchArticles = async (category: string | null = null): Promise<Art
   }
 };
 
+export const fetchRelevantArticles = async (limit: number = 20, skip: number = 0): Promise<Article[]> => {
+  try {
+    const response = await fetch(`/api/articles/relevant?limit=${limit}&skip=${skip}`);
+    const data = await response.json();
+    return data.articles;
+  } catch (error) {
+    console.error('Error fetching relevant articles:', error);
+    return [];
+  }
+};
+
 // Fetch trending articles from API
 export const fetchTrending = async (): Promise<Article[]> => {
   try {
