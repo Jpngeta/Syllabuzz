@@ -28,7 +28,7 @@ from utils.db_utils import initialize_database, modules_collection, articles_col
 from routes.auth_api_routes import auth_api
 
 # Import configuration
-from config import NEWS_API_KEY, DEBUG, SECRET_KEY, SBERT_MODEL_NAME, SESSION_EXPIRY_DAYS
+from config import NEWS_API_KEY, DEBUG, SECRET_KEY, SBERT_MODEL_NAME, SESSION_EXPIRY_DAYS, RELEVANCE_THRESHOLD
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -195,6 +195,63 @@ def get_article(article_id):
             return jsonify({"error": "Article not found"}), 404
     except Exception as e:
         logger.error(f"Error getting article: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    
+
+@app.route('/api/articles/relevant')
+def get_relevant_articles():
+    """Get articles prioritized by relevance across all modules and sorted by date"""
+    try:
+        limit = int(request.args.get('limit', 20))
+        skip = int(request.args.get('skip', 0))
+        
+        # Get articles with high relevance scores across all modules
+        pipeline = [
+            {"$match": {"relevance_score": {"$gte": RELEVANCE_THRESHOLD}}},
+            {"$sort": {"relevance_score": -1}},
+            {"$group": {
+                "_id": "$article_id",
+                "relevance_score": {"$max": "$relevance_score"}
+            }},
+            {"$lookup": {
+                "from": "articles",
+                "localField": "_id",
+                "foreignField": "_id",
+                "as": "article"
+            }},
+            {"$unwind": "$article"},
+            {"$sort": {"article.published_at": -1}},  # Sort by date after filtering by relevance
+            {"$skip": skip},
+            {"$limit": limit},
+            {"$project": {
+                "_id": "$article._id",
+                "title": "$article.title",
+                "description": "$article.description",
+                "content": "$article.content",
+                "url": "$article.url",
+                "image_url": "$article.image_url",
+                "source_name": "$article.source_name",
+                "published_at": "$article.published_at",
+                "updated_at": "$article.updated_at",
+                "categories": "$article.categories",
+                "authors": "$article.authors",
+                "pdf_url": "$article.pdf_url",
+                "arxiv_id": "$article.arxiv_id",
+                "relevance_score": 1,
+                "type": {"$cond": [{"$eq": ["$article.source_name", "arXiv"]}, "academic", "news"]}
+            }}
+        ]
+        
+        relevant_articles = list(relevance_collection.aggregate(pipeline))
+        
+        # Convert ObjectIds to strings
+        for article in relevant_articles:
+            article["_id"] = str(article["_id"])
+        
+        logger.info(f"Found {len(relevant_articles)} relevant articles across all modules")
+        return jsonify({"articles": relevant_articles})
+    except Exception as e:
+        logger.error(f"Error getting relevant articles: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/search')
