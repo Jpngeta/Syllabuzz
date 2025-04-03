@@ -9,7 +9,7 @@ import Sidebar from '../layout/Sidebar';
 import MainContent from './MainContent';
 import Footer from '../layout/Footer';
 import { useAuth } from '../auth/AuthProvider';
-import { fetchModules, fetchArticles, fetchTrending } from '../../services/apiService';
+import { fetchModules, fetchArticles, fetchRelevantArticles, fetchTrending } from '../../services/apiService';
 
 // Types
 import { Module, Article, TabType } from './types';
@@ -77,8 +77,8 @@ const App: React.FC = () => {
       const modulesData = await fetchModules();
       setModules(modulesData);
       
-      // Fetch articles
-      const articlesData = await fetchArticles();
+      // Fetch relevant articles instead of all articles
+      const articlesData = await fetchRelevantArticles();
       setArticles(articlesData);
       
       // Fetch trending
